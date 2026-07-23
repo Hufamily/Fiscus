@@ -216,3 +216,25 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# AWS / IaC
+.aws-sam/
+cdk.out/
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+*.log
+npm-debug.log*
+*.tsbuildinfo

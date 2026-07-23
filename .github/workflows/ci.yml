@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - run: npm run lint
+      - run: npm run typecheck
+
+  db-migrate-dry-run:
+    name: Migration dry run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify migrations against the CockroachDB dev cluster
+        env:
+          COCKROACH_DATABASE_URL: ${{ secrets.COCKROACH_DATABASE_URL }}
+        run: bash db/migrate.sh --dry-run
