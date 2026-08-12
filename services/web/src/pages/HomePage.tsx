@@ -6,9 +6,8 @@ import { Card } from "../components/Card";
 import { StatCard } from "../components/StatCard";
 import { ActivityFeed } from "../components/ActivityFeed";
 import { money } from "../lib/format";
-import { useSession } from "../lib/session";
+import { useSession, DEMO_NAMES, greeting } from "../lib/session";
 import { can } from "../lib/rbac";
-import { ROLE_LABELS } from "../lib/rbac";
 
 export function HomePage() {
   const { role } = useSession();
@@ -30,54 +29,60 @@ export function HomePage() {
   const canReview = can(role, "review_extractions");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Green Paws Rescue</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Signed in as {ROLE_LABELS[role]}. Here's where things stand.
-        </p>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-widest text-bronze">Green Paws Rescue</p>
+          <h1 className="mt-1 text-4xl font-medium tracking-tight">{greeting()}, {DEMO_NAMES[role]}.</h1>
+          <p className="mt-2 text-sm text-faint">
+            {pending > 0
+              ? `${pending} document${pending === 1 ? "" : "s"} could use your eyes.`
+              : "All caught up. Nothing waiting on you."}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {canUpload && <Link to="/upload" className="rounded-full bg-moss px-4 py-2 text-sm font-semibold text-white hover:bg-moss-dark">Upload a document</Link>}
+          {canReview && <Link to="/review" className="rounded-full border border-hairline bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-stone-300">Review{pending ? ` · ${pending}` : ""}</Link>}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Pending review" value={pending} hint="documents awaiting a reviewer" />
+        <StatCard label="Pending review" value={pending} hint="awaiting a reviewer" />
         <StatCard label="Approved" value={approved} hint="processed this period" />
-        <StatCard label="Learned rules" value={learned?.length ?? "—"} hint="corrections the agent auto-applies" />
+        <StatCard label="Learned rules" value={learned?.length ?? "—"} hint="auto-applied by the agent" />
         <StatCard
-          label={summary ? "Total spend (YTD)" : "Documents"}
+          label={summary ? "Total spend · YTD" : "Documents"}
           value={summary ? money(summary.total_spend_cents) : (docs?.length ?? "—")}
           hint={summary ? "aggregate, all categories" : "in the system"}
         />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        {canUpload && <Link to="/upload" className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Upload a document</Link>}
-        {canReview && <Link to="/review" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-dark ring-1 ring-slate-300 hover:bg-slate-50">Review queue{pending ? ` (${pending})` : ""}</Link>}
-        <Link to="/assistant" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-dark ring-1 ring-slate-300 hover:bg-slate-50">Ask the agent</Link>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent activity</h2>
-            <Link to="/activity" className="text-sm text-brand-dark hover:underline">View all</Link>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-xl font-medium">Recent activity</h2>
+            <Link to="/activity" className="text-sm text-moss hover:underline">Full log</Link>
           </div>
-          {activity ? <ActivityFeed events={activity} limit={5} /> : <p className="text-sm text-slate-400">Loading…</p>}
+          {activity ? <ActivityFeed events={activity} limit={5} /> : <p className="text-sm text-faint">Loading…</p>}
         </Card>
 
-        <Card>
-          <h2 className="mb-1 text-lg font-semibold">What the agent has learned</h2>
-          <p className="mb-3 text-sm text-slate-500">
-            Corrections generalized into memory and re-applied automatically to similar documents.
+        <Card className="lg:col-span-2">
+          <h2 className="text-xl font-medium">The agent has learned</h2>
+          <p className="mb-4 mt-1 text-sm text-faint">
+            Your corrections, generalized and re-applied to similar documents.
           </p>
           <ul className="space-y-3">
             {learned?.map((l) => (
-              <li key={l.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <p className="text-sm text-slate-700">{l.learned_rule}</p>
-                <p className="mt-1 text-xs text-slate-400">{l.doc_type.replace(/_/g, " ")} · applied {l.times_applied}×</p>
+              <li key={l.id} className="rounded-lg border border-bronze/20 bg-bronze/5 p-3">
+                <p className="text-sm text-ink">{l.learned_rule}</p>
+                <p className="mt-1.5 font-mono text-[11px] text-bronze">
+                  {l.doc_type.replace(/_/g, " ")} · applied {l.times_applied}×
+                </p>
               </li>
             ))}
-            {!learned && <p className="text-sm text-slate-400">Loading…</p>}
+            {!learned && <p className="text-sm text-faint">Loading…</p>}
           </ul>
+          <Link to="/assistant" className="mt-4 inline-block text-sm text-moss hover:underline">Ask the agent →</Link>
         </Card>
       </div>
     </div>

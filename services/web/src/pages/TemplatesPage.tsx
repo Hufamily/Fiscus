@@ -3,6 +3,7 @@ import { api } from "../api";
 import type { Template } from "../types";
 import { Card } from "../components/Card";
 import { StatusBadge } from "../components/StatusBadge";
+import { Skeleton } from "../components/Skeleton";
 import { useSession } from "../lib/session";
 import { can } from "../lib/rbac";
 
@@ -24,33 +25,34 @@ export function TemplatesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Templates</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Field templates the agent generated from example documents. A reviewer approves one before it is trusted for auto-extraction.
+        <h1 className="text-3xl font-medium tracking-tight">Templates</h1>
+        <p className="mt-1 text-sm text-faint">
+          When the agent meets a new kind of form, it proposes a template. A reviewer approves it before it's trusted.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {templates?.map((t) => (
-          <Card key={t.id} className="flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{t.form_type.replace(/_/g, " ")}</h3>
-                <StatusBadge status={t.status} />
+        {!templates
+          ? Array.from({ length: 3 }).map((_, i) => <Card key={i}><Skeleton className="h-20" /></Card>)
+          : templates.map((t) => (
+            <Card key={t.id} className={`flex flex-col justify-between ${t.status === "pending_review" ? "border-amber-200" : ""}`}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-lg font-medium">{t.form_type.replace(/_/g, " ")}</h3>
+                  <StatusBadge status={t.status} />
+                </div>
+                <p className="figure mt-1 text-sm text-faint">{t.field_count} fields · learned from an example</p>
               </div>
-              <p className="mt-1 text-sm text-slate-500">{t.field_count} fields</p>
-            </div>
-            {t.status === "pending_review" && canApprove && (
-              <button
-                onClick={() => approve(t.id)}
-                disabled={busy === t.id}
-                className="mt-4 rounded-md bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
-              >
-                {busy === t.id ? "Approving…" : "Approve template"}
-              </button>
-            )}
-          </Card>
-        ))}
-        {!templates && <p className="text-slate-400">Loading…</p>}
+              {t.status === "pending_review" && canApprove && (
+                <button
+                  onClick={() => approve(t.id)}
+                  disabled={busy === t.id}
+                  className="mt-4 rounded-full bg-moss px-3 py-1.5 text-sm font-semibold text-white hover:bg-moss-dark disabled:opacity-40"
+                >
+                  {busy === t.id ? "Approving…" : "Approve template"}
+                </button>
+              )}
+            </Card>
+          ))}
       </div>
     </div>
   );

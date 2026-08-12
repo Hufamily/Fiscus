@@ -3,4 +3,20 @@
 @tailwind utilities;
 
 :root { color-scheme: light; }
-body { @apply bg-slate-50 text-ink antialiased; }
+
+body {
+  background-color: #faf7f2; /* paper */
+  color: #1c1917;            /* ink */
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+/* numbers read as ledger figures */
+.figure {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}

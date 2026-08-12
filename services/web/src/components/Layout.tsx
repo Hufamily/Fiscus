@@ -3,9 +3,9 @@ import { RoleSwitcher } from "./RoleSwitcher";
 import { useSession } from "../lib/session";
 import { can } from "../lib/rbac";
 
-const link = "px-3 py-2 rounded-md text-sm font-medium";
-const active = "bg-brand/10 text-brand-dark";
-const idle = "text-slate-600 hover:bg-slate-100";
+const link = "px-3 py-1.5 rounded-full text-sm";
+const active = "bg-moss text-white";
+const idle = "text-faint hover:text-ink hover:bg-hairline/50";
 const cls = ({ isActive }: { isActive: boolean }) => `${link} ${isActive ? active : idle}`;
 
 export function Layout() {
@@ -17,12 +17,12 @@ export function Layout() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand font-bold text-white">F</div>
-              <span className="text-lg font-semibold tracking-tight">Fiscus</span>
+      <header className="border-b border-hairline bg-surface/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-10">
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-2xl font-semibold tracking-tight">Fiscus</span>
+              <span className="hidden text-xs text-faint sm:inline">ledger with a memory</span>
             </div>
             <nav className="flex items-center gap-1">
               <NavLink to="/" end className={cls}>Home</NavLink>
@@ -37,9 +37,12 @@ export function Layout() {
           <RoleSwitcher />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-10">
         <Outlet />
       </main>
+      <footer className="mx-auto max-w-6xl px-6 pb-8 pt-4">
+        <p className="text-xs text-faint">Fiscus · agentic bookkeeping for volunteer orgs · CockroachDB × AWS</p>
+      </footer>
     </div>
   );
 }

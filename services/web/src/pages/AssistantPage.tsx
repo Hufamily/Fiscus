@@ -33,8 +33,8 @@ export function AssistantPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Ask the agent</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-3xl font-medium tracking-tight">Ask the agent</h1>
+        <p className="mt-1 text-sm text-faint">
           Backed by the Bedrock agent with CockroachDB as persistent memory (issues C1-C4).
         </p>
       </div>
@@ -43,26 +43,26 @@ export function AssistantPage() {
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {messages.map((m, i) => (
             <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${m.role === "user" ? "bg-brand text-white" : "bg-slate-100 text-slate-800"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${m.role === "user" ? "bg-moss text-white" : "bg-paper text-ink border border-hairline"}`}>
                 <p>{m.text}</p>
                 {m.citations && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {m.citations.map((c) => (
-                      <span key={c} className="rounded-full bg-white/70 px-2 py-0.5 text-xs text-slate-600 ring-1 ring-slate-200">{c}</span>
+                      <span key={c} className="rounded-full bg-surface px-2 py-0.5 font-mono text-[11px] text-faint ring-1 ring-hairline">{c}</span>
                     ))}
                   </div>
                 )}
               </div>
             </div>
           ))}
-          {thinking && <div className="flex justify-start"><div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-400">Thinking…</div></div>}
+          {thinking && <div className="flex justify-start"><div className="rounded-2xl bg-paper px-4 py-2 text-sm text-faint border border-hairline">Thinking…</div></div>}
           <div ref={endRef} />
         </div>
 
-        <div className="border-t border-slate-200 p-4">
+        <div className="border-t border-hairline p-4">
           <div className="mb-2 flex flex-wrap gap-2">
             {SUGGESTIONS.map((s) => (
-              <button key={s} onClick={() => send(s)} className="rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">{s}</button>
+              <button key={s} onClick={() => send(s)} className="rounded-full border border-hairline px-3 py-1 text-xs text-faint hover:border-stone-300 hover:text-ink">{s}</button>
             ))}
           </div>
           <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2">
@@ -70,9 +70,9 @@ export function AssistantPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about spending, categories, pending items…"
-              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="flex-1 rounded-full border border-hairline bg-surface px-4 py-2 text-sm"
             />
-            <button type="submit" disabled={thinking} className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-40">Send</button>
+            <button type="submit" disabled={thinking} className="rounded-full bg-moss px-4 py-2 text-sm font-semibold text-white hover:bg-moss-dark disabled:opacity-40">Send</button>
           </form>
         </div>
       </Card>

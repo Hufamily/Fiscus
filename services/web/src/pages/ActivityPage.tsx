@@ -10,12 +10,12 @@ export function ActivityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Activity log</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-3xl font-medium tracking-tight">Activity log</h1>
+        <p className="mt-1 text-sm text-faint">
           Append-only audit trail. Every human and agent action is recorded (charter section 5).
         </p>
       </div>
-      <Card>{activity ? <ActivityFeed events={activity} /> : <p className="text-sm text-slate-400">Loading…</p>}</Card>
+      <Card>{activity ? <ActivityFeed events={activity} /> : <p className="text-sm text-faint">Loading…</p>}</Card>
     </div>
   );
 }
