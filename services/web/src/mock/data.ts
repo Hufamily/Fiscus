@@ -75,3 +75,29 @@ export const LEADERSHIP_SUMMARY: LeadershipSummary = {
     { month: "Jul", total_cents: 251000 },
   ],
 };
+
+// ---- Added for the fuller layout ----
+import type { ActivityEvent, LearnedCorrection } from "../types";
+
+export const ACTIVITY: ActivityEvent[] = [
+  { id: "act_1", org_id: ORG.id, actor: "Fiscus Agent", is_agent: true,  action: "fields_extracted",     detail: "Extracted 5 fields from vet-invoice-0714.pdf", created_at: "2026-07-14T15:03:00Z" },
+  { id: "act_2", org_id: ORG.id, actor: "Amy Chen",     is_agent: false, action: "document_uploaded",    detail: "Uploaded vet-invoice-0714.pdf", created_at: "2026-07-14T15:02:00Z" },
+  { id: "act_3", org_id: ORG.id, actor: "Raj Patel",    is_agent: false, action: "correction_applied",   detail: "Corrected Total Amount on txn_2 ($8.799 -> $87.99)", created_at: "2026-07-13T10:20:00Z" },
+  { id: "act_4", org_id: ORG.id, actor: "Fiscus Agent", is_agent: true,  action: "template_generated",   detail: "Generated a donation_form template from donation-form-0709.pdf", created_at: "2026-07-09T11:05:00Z" },
+  { id: "act_5", org_id: ORG.id, actor: "Dana Okoro",   is_agent: false, action: "transaction_approved", detail: "Approved donation-form-0709.pdf ($250.00)", created_at: "2026-07-09T11:10:00Z" },
+  { id: "act_6", org_id: ORG.id, actor: "Fiscus Agent", is_agent: true,  action: "correction_applied",   detail: "Auto-applied a learned vendor fix on a new Petco receipt", created_at: "2026-07-12T18:21:00Z" },
+];
+
+export const LEARNED: LearnedCorrection[] = [
+  { id: "lc_1", org_id: ORG.id, doc_type: "supply_receipt", field: "vendor",   learned_rule: "'Petco #2214' is recorded as vendor 'Petco'", times_applied: 6, last_applied: "2026-07-12T18:21:00Z" },
+  { id: "lc_2", org_id: ORG.id, doc_type: "vet_invoice",    field: "category", learned_rule: "Line items from Riverside Animal Hospital -> category 'Veterinary'", times_applied: 11, last_applied: "2026-07-14T15:03:00Z" },
+  { id: "lc_3", org_id: ORG.id, doc_type: "utility_bill",   field: "category", learned_rule: "ConEd statements -> category 'Facilities'", times_applied: 4, last_applied: "2026-06-28T09:31:00Z" },
+];
+
+// Canned agent answers (keyword-matched) standing in for the C1-C4 Bedrock agent.
+export const AGENT_QA: { match: string[]; text: string; citations?: string[] }[] = [
+  { match: ["vet", "veterinary"], text: "You've spent $6,123.00 on Veterinary so far this year across 48 transactions. That's your largest category, about 48% of total spend.", citations: ["Veterinary: $6,123.00", "48 transactions", "YTD 2026"] },
+  { match: ["supplies", "supply"], text: "Supplies total $2,841.00 across 51 transactions this year. Most of it is recurring Petco purchases.", citations: ["Supplies: $2,841.00", "51 transactions"] },
+  { match: ["total", "spend", "budget"], text: "Total spend YTD is $12,845.00 across 142 transactions. Two documents are still pending review.", citations: ["Total: $12,845.00", "142 transactions", "2 pending"] },
+  { match: ["pending", "review", "waiting"], text: "There are 2 documents waiting for review: vet-invoice-0714.pdf and petco-receipt-0712.jpg.", citations: ["2 pending review"] },
+];

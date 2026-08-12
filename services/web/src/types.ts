@@ -86,3 +86,41 @@ export interface LeadershipSummary {
   by_category: CategoryTotal[];
   monthly_spend_cents: { month: string; total_cents: number }[];
 }
+
+// ---- Added for the fuller layout (activity feed, learned memory, agent chat) ----
+
+export type ActivityAction =
+  | "document_uploaded"
+  | "fields_extracted"
+  | "correction_applied"
+  | "transaction_approved"
+  | "template_generated"
+  | "template_approved";
+
+export interface ActivityEvent {
+  id: string;
+  org_id: string;
+  actor: string;      // display name, "Fiscus Agent" for agent actions
+  is_agent: boolean;
+  action: ActivityAction;
+  detail: string;     // human-readable line
+  created_at: string;
+}
+
+// A correction the agent has generalized into memory and now auto-applies.
+export interface LearnedCorrection {
+  id: string;
+  org_id: string;
+  doc_type: string;
+  field: string;
+  learned_rule: string;   // e.g. "Vendor 'Riverside Animal Hosp.' -> 'Riverside Animal Hospital'"
+  times_applied: number;
+  last_applied: string;
+}
+
+export interface AgentMessage {
+  role: "user" | "agent";
+  text: string;
+  // aggregate figures the agent cites, shown as chips under an answer
+  citations?: string[];
+}

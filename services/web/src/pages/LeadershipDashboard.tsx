@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { LeadershipSummary } from "../types";
+import type { LeadershipSummary, ActivityEvent } from "../types";
 import { Card } from "../components/Card";
+import { ActivityFeed } from "../components/ActivityFeed";
 import { money } from "../lib/format";
 import { useSession } from "../lib/session";
 import { can } from "../lib/rbac";
@@ -10,8 +11,14 @@ export function LeadershipDashboard() {
   const { role } = useSession();
   const allowed = can(role, "view_aggregate_reports");
   const [s, setS] = useState<LeadershipSummary | null>(null);
+  const [activity, setActivity] = useState<ActivityEvent[] | null>(null);
 
-  useEffect(() => { if (allowed) api.getLeadershipSummary().then(setS); }, [allowed]);
+  useEffect(() => {
+    if (allowed) {
+      api.getLeadershipSummary().then(setS);
+      api.getActivity().then(setActivity);
+    }
+  }, [allowed]);
 
   if (!allowed) {
     return (
@@ -25,6 +32,7 @@ export function LeadershipDashboard() {
 
   const maxMonth = Math.max(...s.monthly_spend_cents.map((m) => m.total_cents));
   const maxCat = Math.max(...s.by_category.map((c) => c.total_cents));
+  const avgTxn = Math.round(s.total_spend_cents / s.txn_count);
 
   return (
     <div className="space-y-6">
@@ -36,19 +44,11 @@ export function LeadershipDashboard() {
         <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">{s.period_label}</span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <p className="text-sm text-slate-500">Total spend</p>
-          <p className="mt-1 text-2xl font-semibold">{money(s.total_spend_cents)}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-slate-500">Transactions</p>
-          <p className="mt-1 text-2xl font-semibold">{s.txn_count}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-slate-500">Pending review</p>
-          <p className="mt-1 text-2xl font-semibold">{s.pending_review_count}</p>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Card><p className="text-sm text-slate-500">Total spend</p><p className="mt-1 text-2xl font-semibold">{money(s.total_spend_cents)}</p></Card>
+        <Card><p className="text-sm text-slate-500">Transactions</p><p className="mt-1 text-2xl font-semibold">{s.txn_count}</p></Card>
+        <Card><p className="text-sm text-slate-500">Avg. transaction</p><p className="mt-1 text-2xl font-semibold">{money(avgTxn)}</p></Card>
+        <Card><p className="text-sm text-slate-500">Pending review</p><p className="mt-1 text-2xl font-semibold">{s.pending_review_count}</p></Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -83,6 +83,11 @@ export function LeadershipDashboard() {
           </div>
         </Card>
       </div>
+
+      <Card>
+        <h2 className="mb-3 text-lg font-semibold">Recent activity</h2>
+        {activity ? <ActivityFeed events={activity} limit={6} /> : <p className="text-sm text-slate-400">Loading…</p>}
+      </Card>
     </div>
   );
 }

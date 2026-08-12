@@ -1,11 +1,13 @@
 import type { FiscusApi } from "./client";
-import type { FiscusDocument, Transaction, Template, Correction } from "../types";
-import { ORG, VOLUNTEERS, DOCUMENTS, TRANSACTIONS, TEMPLATES, LEADERSHIP_SUMMARY } from "../mock/data";
+import type { FiscusDocument, Transaction, Template, Correction, AgentMessage } from "../types";
+import {
+  ORG, VOLUNTEERS, DOCUMENTS, TRANSACTIONS, TEMPLATES, LEADERSHIP_SUMMARY,
+  ACTIVITY, LEARNED, AGENT_QA,
+} from "../mock/data";
 
 const delay = (ms = 350) => new Promise((r) => setTimeout(r, ms));
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
-// In-memory mutable state so corrections/approvals feel real in the demo.
 let docs: FiscusDocument[] = clone(DOCUMENTS);
 let txns: Record<string, Transaction> = clone(TRANSACTIONS);
 let templates: Template[] = clone(TEMPLATES);
@@ -50,7 +52,6 @@ export const mockApi: FiscusApi = {
       created_at: new Date().toISOString(),
     };
     corrections.push(c);
-    // reflect the corrected value back onto the txn's extracted field
     const docId = Object.keys(txns).find((k) => txns[k].id === input.transaction_id);
     if (docId) {
       const f = txns[docId].extracted_fields.find((x) => x.key === input.field);
@@ -79,5 +80,19 @@ export const mockApi: FiscusApi = {
     await delay();
     const pending = docs.filter((d) => d.status === "needs_review").length;
     return clone({ ...LEADERSHIP_SUMMARY, pending_review_count: pending });
+  },
+
+  async getActivity() { await delay(); return clone(ACTIVITY); },
+
+  async getLearnedCorrections() { await delay(); return clone(LEARNED); },
+
+  async askAgent(question) {
+    await delay(500);
+    const q = question.toLowerCase();
+    const hit = AGENT_QA.find((a) => a.match.some((m) => q.includes(m)));
+    const msg: AgentMessage = hit
+      ? { role: "agent", text: hit.text, citations: hit.citations }
+      : { role: "agent", text: "I can answer questions about spending by category, totals, and what's pending review. Try asking about vet costs, supplies, or total spend." };
+    return clone(msg);
   },
 };

@@ -6,10 +6,12 @@ import { can } from "../lib/rbac";
 const link = "px-3 py-2 rounded-md text-sm font-medium";
 const active = "bg-brand/10 text-brand-dark";
 const idle = "text-slate-600 hover:bg-slate-100";
+const cls = ({ isActive }: { isActive: boolean }) => `${link} ${isActive ? active : idle}`;
 
 export function Layout() {
   const { role } = useSession();
-  const showVolunteer = can(role, "upload_documents") || can(role, "review_extractions");
+  const showUpload = can(role, "upload_documents");
+  const showReview = can(role, "review_extractions");
   const showTemplates = can(role, "approve_templates") || can(role, "review_extractions");
   const showLeadership = can(role, "view_aggregate_reports");
 
@@ -23,10 +25,13 @@ export function Layout() {
               <span className="text-lg font-semibold tracking-tight">Fiscus</span>
             </div>
             <nav className="flex items-center gap-1">
-              {showVolunteer && <NavLink to="/upload" className={({ isActive }) => `${link} ${isActive ? active : idle}`}>Upload</NavLink>}
-              {showVolunteer && <NavLink to="/review" className={({ isActive }) => `${link} ${isActive ? active : idle}`}>Review</NavLink>}
-              {showTemplates && <NavLink to="/templates" className={({ isActive }) => `${link} ${isActive ? active : idle}`}>Templates</NavLink>}
-              {showLeadership && <NavLink to="/dashboard" className={({ isActive }) => `${link} ${isActive ? active : idle}`}>Dashboard</NavLink>}
+              <NavLink to="/" end className={cls}>Home</NavLink>
+              {showUpload && <NavLink to="/upload" className={cls}>Upload</NavLink>}
+              {showReview && <NavLink to="/review" className={cls}>Review</NavLink>}
+              {showTemplates && <NavLink to="/templates" className={cls}>Templates</NavLink>}
+              <NavLink to="/assistant" className={cls}>Assistant</NavLink>
+              <NavLink to="/activity" className={cls}>Activity</NavLink>
+              {showLeadership && <NavLink to="/dashboard" className={cls}>Dashboard</NavLink>}
             </nav>
           </div>
           <RoleSwitcher />
