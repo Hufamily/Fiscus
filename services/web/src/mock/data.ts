@@ -73,12 +73,19 @@ export const TRANSACTIONS: Record<string, Transaction> = {
   },
 };
 
+const F = (key: string, label: string, sample: string) => ({ key, label, sample });
+
 export const TEMPLATES: Template[] = [
-  { id: "tpl_1", org_id: ORG.id, form_type: "vet_invoice",    status: "approved",       field_count: 6, example_doc_id: "doc_9" },
-  { id: "tpl_2", org_id: ORG.id, form_type: "supply_receipt", status: "approved",       field_count: 5, example_doc_id: "doc_7" },
-  { id: "tpl_3", org_id: ORG.id, form_type: "donation_form",  status: "approved",       field_count: 7, example_doc_id: "doc_5" },
-  { id: "tpl_4", org_id: ORG.id, form_type: "event_invoice",  status: "pending_review", field_count: 6, example_doc_id: "doc_3" },
-  { id: "tpl_5", org_id: ORG.id, form_type: "utility_bill",   status: "approved",       field_count: 4, example_doc_id: "doc_11" },
+  { id: "tpl_1", org_id: ORG.id, form_type: "vet_invoice",    status: "approved",       field_count: 6, example_doc_id: "doc_9",
+    fields: [F("vendor","Vendor","Riverside Animal Hospital"), F("amount","Total Amount","$423.50"), F("txn_date","Date","2026-07-14"), F("category","Category","Veterinary"), F("patient","Animal","Biscuit (terrier mix)"), F("card_last4","Card (last 4)","•••• 4021")] },
+  { id: "tpl_2", org_id: ORG.id, form_type: "supply_receipt", status: "approved",       field_count: 5, example_doc_id: "doc_7",
+    fields: [F("vendor","Vendor","Petco"), F("amount","Total Amount","$64.20"), F("txn_date","Date","2026-07-22"), F("category","Category","Supplies"), F("items","Line items","food, litter, toys")] },
+  { id: "tpl_3", org_id: ORG.id, form_type: "donation_form",  status: "approved",       field_count: 7, example_doc_id: "doc_5",
+    fields: [F("donor","Donor","(redacted)"), F("amount","Amount","$250.00"), F("txn_date","Date","2026-08-03"), F("method","Method","check"), F("fund","Fund","general"), F("receipt","Receipt sent","yes"), F("notes","Notes","in memory of Max")] },
+  { id: "tpl_4", org_id: ORG.id, form_type: "event_invoice",  status: "pending_review", field_count: 6, example_doc_id: "doc_3",
+    fields: [F("vendor","Vendor","Harvest Table Catering"), F("amount","Total Amount","$1,680.00"), F("txn_date","Date","2026-08-08"), F("category","Category","Events"), F("event","Event","Fall fundraiser gala"), F("deposit","Deposit?","yes — 50%")] },
+  { id: "tpl_5", org_id: ORG.id, form_type: "utility_bill",   status: "approved",       field_count: 4, example_doc_id: "doc_11",
+    fields: [F("vendor","Vendor","ConEd"), F("amount","Total Amount","$214.60"), F("txn_date","Date","2026-06-28"), F("category","Category","Facilities")] },
 ];
 
 export const LEADERSHIP_SUMMARY: LeadershipSummary = {

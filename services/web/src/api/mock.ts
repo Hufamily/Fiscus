@@ -1,5 +1,5 @@
 import type { FiscusApi } from "./client";
-import type { FiscusDocument, Transaction, Template, Correction, AgentMessage } from "../types";
+import type { FiscusDocument, Transaction, Template, Correction, AgentMessage, SearchResult, ReviewSession } from "../types";
 import {
   ORG, VOLUNTEERS, DOCUMENTS, TRANSACTIONS, TEMPLATES, LEADERSHIP_SUMMARY,
   ACTIVITY, LEARNED, AGENT_QA,
@@ -94,5 +94,60 @@ export const mockApi: FiscusApi = {
       ? { role: "agent", text: hit.text, citations: hit.citations }
       : { role: "agent", text: "I can answer questions about spending by category, totals, and what's pending review. Try asking about vet costs, supplies, or total spend." };
     return clone(msg);
+  },
+
+  async searchTransactions(query) {
+    await delay(420);
+    const q = query.toLowerCase().trim();
+    if (!q) return [];
+    // Mock of B3: score every known transaction + document against the query terms.
+    // The real endpoint does cosine similarity over VECTOR(1536) embeddings in CockroachDB.
+    const terms = q.split(/\s+/);
+    const results: SearchResult[] = [];
+    for (const d of docs) {
+      const t = txns[d.id];
+      const hay = [
+        d.s3_key, d.doc_type, t?.category ?? "", t?.txn_date ?? "", d.created_at.slice(0, 7),
+        ...(t?.extracted_fields.map((f) => f.value) ?? []),
+      ].join(" ").toLowerCase();
+      let score = 0;
+      for (const term of terms) {
+        if (hay.includes(term)) score += 0.42;
+        else if (term.length > 3 && hay.includes(term.slice(0, term.length - 1))) score += 0.2;
+      }
+      // month-name queries ("june") map to txn dates
+      const months: Record<string, string> = { january:"-01-", february:"-02-", march:"-03-", april:"-04-", may:"-05-", june:"-06-", july:"-07-", august:"-08-" };
+      for (const [name, num] of Object.entries(months)) {
+        if (q.includes(name) && (t?.txn_date.includes(num) || d.created_at.includes(num))) score += 0.5;
+      }
+      if (score > 0.15) {
+        results.push({
+          transaction_id: t?.id ?? "txn_" + d.id,
+          document_id: d.id,
+          doc_name: d.s3_key.split("/").pop() ?? d.id,
+          doc_type: d.doc_type,
+          category: t?.category ?? d.doc_type.replace(/_/g, " "),
+          amount_cents: t?.amount_cents ?? 0,
+          txn_date: t?.txn_date ?? d.created_at.slice(0, 10),
+          snippet: t ? t.extracted_fields.slice(0, 2).map((f) => `${f.label}: ${f.value}`).join(" · ") : "extracted record",
+          score: Math.min(0.98, 0.45 + score * 0.35),
+        });
+      }
+    }
+    return results.sort((a, b) => b.score - a.score).slice(0, 6);
+  },
+
+  async getReviewSession() {
+    await delay(200);
+    const pending = docs.filter((d) => d.status === "needs_review").map((d) => d.id);
+    if (pending.length === 0) return null;
+    const session: ReviewSession = {
+      id: "sess_amy_1",
+      volunteer_id: "vol_amy",
+      pending_document_ids: pending,
+      current_index: 0,
+      updated_at: new Date().toISOString(),
+    };
+    return clone(session);
   },
 };

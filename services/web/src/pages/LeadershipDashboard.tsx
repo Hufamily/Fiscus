@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import type { LeadershipSummary, ActivityEvent } from "../types";
 import { Card } from "../components/Card";
@@ -59,7 +60,7 @@ export function LeadershipDashboard() {
               <div key={c.category}>
                 <div className="mb-1 flex justify-between text-sm">
                   <span className="text-ink">{c.category}</span>
-                  <span className="font-medium">{money(c.total_cents)}</span>
+                  <span className="figure font-medium">{money(c.total_cents)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-hairline/50">
                   <div className="h-2 rounded-full bg-moss" style={{ width: `${(c.total_cents / maxCat) * 100}%` }} />
@@ -77,11 +78,28 @@ export function LeadershipDashboard() {
                 <div className="flex w-full flex-1 items-end">
                   <div className="w-full rounded-t bg-moss/80" style={{ height: `${(m.total_cents / maxMonth) * 100}%` }} title={money(m.total_cents)} />
                 </div>
-                <span className="text-xs text-faint">{m.month}</span>
+                <span className="figure text-xs text-faint">{m.month}</span>
               </div>
             ))}
           </div>
         </Card>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-mono text-[11px] uppercase tracking-wide text-faint">Ask the agent:</span>
+        {[
+          "Are we over budget on vet care?",
+          "What's pending review?",
+          "How much did the gala cost?",
+        ].map((q) => (
+          <Link
+            key={q}
+            to={`/assistant?q=${encodeURIComponent(q)}`}
+            className="rounded-full border border-hairline bg-surface px-3 py-1 text-xs text-faint hover:border-stone-300 hover:text-ink"
+          >
+            {q}
+          </Link>
+        ))}
       </div>
 
       <Card>

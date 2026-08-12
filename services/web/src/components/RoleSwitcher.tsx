@@ -11,7 +11,7 @@ export function RoleSwitcher() {
   return (
     <label className="flex items-center gap-2 text-sm text-faint">
       <span className="rounded-full border border-hairline px-1.5 py-px font-mono text-[10px] uppercase tracking-wide text-faint">demo</span>
-      <span className="hidden sm:inline">Viewing as</span>
+      <span className="hidden whitespace-nowrap lg:inline">Viewing as</span>
       <select
         value={role}
         onChange={(e) => setRole(e.target.value as Role)}

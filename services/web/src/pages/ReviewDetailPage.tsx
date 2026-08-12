@@ -69,17 +69,17 @@ export function ReviewDetailPage() {
     }
     await api.approveTransaction(txn.id);
     setSaving(false);
-    // P1-6: the product thesis, on screen — corrections become memory.
+    // P1-6: the product thesis, on screen, corrections become memory.
     if (changed.length > 0) {
       const first = changed[0];
       push(
-        "Got it — I'll remember that.",
+        "Got it, I'll remember that.",
         changed.length === 1
           ? `Future ${txn.category.toLowerCase()} documents like this will use "${first.to}" for ${first.field}.`
           : `${changed.length} corrections saved to memory for documents like this one.`
       );
     } else {
-      push("Filed.", "Approved with no changes — nice when that happens.");
+      push("Filed.", "Approved with no changes, nice when that happens.");
     }
     nav("/review");
   }
@@ -99,7 +99,7 @@ export function ReviewDetailPage() {
         <Card>
           <h2 className="text-xl font-medium">What the agent read</h2>
           <p className="mb-5 mt-1 text-sm text-faint">
-            Fix anything wrong before approving — corrections become rules it applies next time.
+            Fix anything wrong before approving. Corrections become rules it applies next time.
           </p>
           <div className="space-y-4">
             {txn.extracted_fields.map((f) => {
@@ -122,7 +122,7 @@ export function ReviewDetailPage() {
                     }`}
                   />
                   {f.confidence < 0.75 && !edited && (
-                    <p className="mt-1 text-xs text-rose-600">The agent wasn't sure about this one — worth a look.</p>
+                    <p className="mt-1 text-xs text-rose-600">The agent wasn't sure about this one, worth a look.</p>
                   )}
                 </div>
               );

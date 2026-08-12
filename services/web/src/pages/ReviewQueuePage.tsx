@@ -5,6 +5,7 @@ import type { FiscusDocument } from "../types";
 import { Card } from "../components/Card";
 import { StatusBadge } from "../components/StatusBadge";
 import { RowSkeleton } from "../components/Skeleton";
+import { HelpHint } from "../components/HelpHint";
 import { shortDate } from "../lib/format";
 
 export function ReviewQueuePage() {
@@ -20,10 +21,13 @@ export function ReviewQueuePage() {
       <div>
         <h1 className="text-3xl font-medium tracking-tight">Review queue</h1>
         <p className="mt-1 text-sm text-faint">
-          The agent read these and drafted transactions. Check its work — anything you fix, it learns.
+          The agent read these and drafted transactions. Check its work, anything you fix, it learns.
         </p>
       </div>
 
+      <HelpHint>
+        Nothing is final until a person approves it. Approving with a fix teaches the agent; approving unchanged tells it the reading was right. Either way, you're the accountant here, it's the intern.
+      </HelpHint>
       <Card className="p-0">
         {!docs ? (
           <div className="p-5"><RowSkeleton rows={5} /></div>

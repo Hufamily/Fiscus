@@ -33,8 +33,8 @@ export function UploadPage() {
   }
 
   function validate(file: File): string | null {
-    if (!ACCEPTED.includes(file.type)) return `That's a ${file.type || "file type"} — Fiscus takes PDFs and photos (JPG/PNG).`;
-    if (file.size > MAX_MB * 1024 * 1024) return `That file is ${(file.size / 1048576).toFixed(1)} MB — the limit is ${MAX_MB} MB.`;
+    if (!ACCEPTED.includes(file.type)) return `That's a ${file.type || "file type"}, Fiscus takes PDFs and photos (JPG/PNG).`;
+    if (file.size > MAX_MB * 1024 * 1024) return `That file is ${(file.size / 1048576).toFixed(1)} MB, the limit is ${MAX_MB} MB.`;
     return null;
   }
 
@@ -65,7 +65,7 @@ export function UploadPage() {
       setState({ phase: "done", docId: doc.id, name: file.name });
     } catch {
       clearInterval(timer);
-      setState({ phase: "error", message: "Upload failed. Check your connection and try again — the file stays on your device until it succeeds." });
+      setState({ phase: "error", message: "Upload failed. Check your connection and try again, the file stays on your device until it succeeds." });
     }
   }
 
@@ -74,7 +74,7 @@ export function UploadPage() {
       <div>
         <h1 className="text-3xl font-medium tracking-tight">Add a document</h1>
         <p className="mt-1 text-sm text-faint">
-          Receipts, invoices, donation forms — a photo is fine. The agent reads it and files a draft for review.
+          Receipts, invoices, donation forms, a photo is fine. The agent reads it and files a draft for review.
         </p>
       </div>
 

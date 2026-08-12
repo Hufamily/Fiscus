@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import type { FiscusDocument, ActivityEvent, LearnedCorrection, LeadershipSummary } from "../types";
+import type { FiscusDocument, ActivityEvent, LearnedCorrection, LeadershipSummary, ReviewSession } from "../types";
 import { Card } from "../components/Card";
 import { StatCard } from "../components/StatCard";
 import { ActivityFeed } from "../components/ActivityFeed";
@@ -15,12 +15,21 @@ export function HomePage() {
   const [activity, setActivity] = useState<ActivityEvent[] | null>(null);
   const [learned, setLearned] = useState<LearnedCorrection[] | null>(null);
   const [summary, setSummary] = useState<LeadershipSummary | null>(null);
+  const [session, setSession] = useState<ReviewSession | null>(null);
 
   useEffect(() => {
-    api.listDocuments().then(setDocs);
-    api.getActivity().then(setActivity);
-    api.getLearnedCorrections().then(setLearned);
-    if (can(role, "view_aggregate_reports")) api.getLeadershipSummary().then(setSummary);
+    const load = () => {
+      api.listDocuments().then(setDocs);
+      api.getActivity().then(setActivity);
+      api.getLearnedCorrections().then(setLearned);
+      api.getReviewSession().then(setSession);
+      if (can(role, "view_aggregate_reports")) api.getLeadershipSummary().then(setSummary);
+    };
+    load();
+    // Numbers stay honest when you come back to this tab/page (P3-21).
+    const onFocus = () => document.visibilityState === "visible" && load();
+    document.addEventListener("visibilitychange", onFocus);
+    return () => document.removeEventListener("visibilitychange", onFocus);
   }, [role]);
 
   const pending = docs?.filter((d) => d.status === "needs_review").length ?? 0;
@@ -56,6 +65,23 @@ export function HomePage() {
           hint={summary ? "aggregate, all categories" : "in the system"}
         />
       </div>
+
+      {session && canReview && (
+        <Card className="flex items-center justify-between border-moss/25">
+          <div>
+            <p className="font-display text-lg font-medium">Pick up where you left off</p>
+            <p className="mt-0.5 text-sm text-faint">
+              {session.pending_document_ids.length} document{session.pending_document_ids.length === 1 ? "" : "s"} left in your review session. The agent saved your place.
+            </p>
+          </div>
+          <Link
+            to={`/review/${session.pending_document_ids[session.current_index]}`}
+            className="shrink-0 rounded-full bg-moss px-4 py-2 text-sm font-semibold text-white hover:bg-moss-dark"
+          >
+            Continue →
+          </Link>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">

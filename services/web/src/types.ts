@@ -57,6 +57,7 @@ export interface Template {
   status: TemplateStatus;
   field_count: number;
   example_doc_id: string;
+  fields: { key: string; label: string; sample: string }[];
 }
 
 export interface Correction {
@@ -123,4 +124,26 @@ export interface AgentMessage {
   text: string;
   // aggregate figures the agent cites, shown as chips under an answer
   citations?: string[];
+}
+
+// ---- Search (B3) + session persistence (C2) surfaces ----
+
+export interface SearchResult {
+  transaction_id: string;
+  document_id: string;
+  doc_name: string;
+  doc_type: string;
+  category: string;
+  amount_cents: number;
+  txn_date: string;
+  snippet: string;
+  score: number; // cosine similarity 0..1
+}
+
+export interface ReviewSession {
+  id: string;
+  volunteer_id: string;
+  pending_document_ids: string[];
+  current_index: number;
+  updated_at: string;
 }

@@ -3,6 +3,7 @@
 import type {
   FiscusDocument, Transaction, Template, Correction, LeadershipSummary,
   Organization, Volunteer, ActivityEvent, LearnedCorrection, AgentMessage,
+  SearchResult, ReviewSession,
 } from "../types";
 
 export interface FiscusApi {
@@ -28,4 +29,10 @@ export interface FiscusApi {
   getActivity(): Promise<ActivityEvent[]>;             // audit_log consumer (charter section 6)
   getLearnedCorrections(): Promise<LearnedCorrection[]>; // agent memory made visible
   askAgent(question: string): Promise<AgentMessage>;   // C1-C4 Bedrock agent (mocked)
+
+  // B3 semantic search over transactions (vector index). Mocked with keyword+fuzzy scoring.
+  searchTransactions(query: string): Promise<SearchResult[]>;
+
+  // C2 session/task-state persistence: where the volunteer left off.
+  getReviewSession(): Promise<ReviewSession | null>;
 }

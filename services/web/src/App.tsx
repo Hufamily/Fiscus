@@ -11,6 +11,7 @@ import { TemplatesPage } from "./pages/TemplatesPage";
 import { AssistantPage } from "./pages/AssistantPage";
 import { ActivityPage } from "./pages/ActivityPage";
 import { LeadershipDashboard } from "./pages/LeadershipDashboard";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 const TITLES: Record<string, string> = {
   "/": "Home", "/upload": "Upload", "/review": "Review", "/templates": "Templates",
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="assistant" element={<AssistantPage />} />
               <Route path="activity" element={<ActivityPage />} />
               <Route path="dashboard" element={<LeadershipDashboard />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
