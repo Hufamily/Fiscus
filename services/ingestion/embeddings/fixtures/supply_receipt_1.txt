@@ -1,0 +1,26 @@
+OFFICE DEPOT
+789 Commerce Blvd, Springfield, IL 62703
+Tel: (555) 987-6543
+
+RECEIPT
+
+Receipt #: RCP-240610
+Date: 06/10/2024
+
+Sold To: Demo Nonprofit Organization
+Purchase Order: PO-2024-042
+
+ITEMS PURCHASED
+---------------------------------------------------------
+Copy Paper (5 reams)               $24.99
+Printer Ink Cartridges (2-pack)    $38.99
+File Folders (box of 100)          $12.99
+Sticky Notes (6-pack)               $9.53
+---------------------------------------------------------
+Subtotal:                          $86.50
+Tax (1.15%):                        $1.00
+TOTAL:                             $87.50
+
+Payment Method: Check #1042
+
+Thank you for shopping at Office Depot!

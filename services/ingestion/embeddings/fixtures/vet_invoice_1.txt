@@ -1,0 +1,31 @@
+PAWS & CLAWS VETERINARY CLINIC
+123 Elm Street, Springfield, IL 62701
+Tel: (555) 234-5678
+
+INVOICE
+
+Invoice #: INV-240715
+Invoice Date: 07/15/2024
+Due Date: 07/29/2024
+
+Patient: Biscuit (Golden Retriever, Male, 4 yrs)
+Owner: Jane Doe
+Account #: VET-00412
+
+SERVICES RENDERED
+---------------------------------------------------------
+Annual Wellness Exam               $75.00
+Rabies Vaccination                 $35.00
+DHPP Vaccination                   $42.00
+Heartworm Test                     $28.00
+Flea/Tick Prevention (3-month)     $45.00
+---------------------------------------------------------
+Subtotal:                         $225.00
+Tax (8.75%):                       $19.69
+TOTAL DUE:                        $244.69
+
+Payment Method: Credit Card
+Card: 4111 1111 1111 1111
+Paid in Full
+
+Thank you for trusting us with Biscuit's care!
