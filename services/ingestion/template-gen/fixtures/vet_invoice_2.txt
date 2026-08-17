@@ -1,0 +1,30 @@
+PAWS & CLAWS VETERINARY CLINIC
+123 Elm Street, Springfield, IL 62701
+Tel: (555) 234-5678
+
+INVOICE
+
+Invoice #: INV-240822
+Invoice Date: 08/22/2024
+Due Date: 09/05/2024
+
+Patient: Luna (Domestic Shorthair, Female, 2 yrs)
+Owner: Robert Smith
+Account #: VET-00517
+
+SERVICES RENDERED
+---------------------------------------------------------
+Sick Visit - Upper Respiratory     $65.00
+Amoxicillin (14-day supply)        $38.00
+CBC Blood Panel                    $85.00
+Radiograph (2 views)              $110.00
+---------------------------------------------------------
+Subtotal:                         $298.00
+Tax (8.75%):                       $26.08
+TOTAL DUE:                        $324.08
+
+Payment Method: Credit Card
+Card: 4242 4242 4242 4242
+Paid in Full
+
+Your pet is our priority. See you at the next visit!

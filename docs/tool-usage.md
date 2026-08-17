@@ -13,7 +13,7 @@ how" writeup — keep it accurate as you go, don't reconstruct it at the end.
 | CockroachDB | Agent Skills Repo | ☐ | | |
 | AWS | S3 | ☐ | | |
 | AWS | Lambda | ☐ | | |
-| AWS | Bedrock | ☐ | | |
+| AWS | Bedrock | ☑ | B2 template-gen: Claude 3.5 Haiku infers schema_json from 2+ example docs; Titan Embed Text v2 (1536 dims) computes the template embedding stored in CockroachDB | B2 |
 
 ## Notes for the final writeup
 
