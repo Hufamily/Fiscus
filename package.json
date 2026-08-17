@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "db:migrate": "bash db/migrate.sh",
+    "db:seed": "tsx db/seed.ts",
     "template:generate": "tsx services/ingestion/template-gen/src/cli.ts generate",
     "template:approve": "tsx services/ingestion/template-gen/src/cli.ts approve",
     "embed:file": "tsx services/ingestion/embeddings/src/cli.ts embed",

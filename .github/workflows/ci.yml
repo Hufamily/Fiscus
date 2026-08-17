@@ -30,6 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
       - name: Verify migrations against the CockroachDB dev cluster
         env:
           COCKROACH_DATABASE_URL: ${{ secrets.COCKROACH_DATABASE_URL }}
