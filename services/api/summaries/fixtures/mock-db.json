@@ -1,0 +1,86 @@
+{
+  "documents": [],
+  "transactions": [
+    {
+      "id": "aaaaaaaa-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "document_id": "11111111-0000-0000-0000-000000000001",
+      "category": "veterinary",
+      "amount_cents": 24469,
+      "currency": "USD",
+      "txn_date": "2024-07-15",
+      "extracted_fields_json": [],
+      "embedding": [],
+      "status": "approved",
+      "created_at": "2024-07-15T00:00:00.000Z"
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "document_id": "22222222-0000-0000-0000-000000000001",
+      "category": "veterinary",
+      "amount_cents": 32408,
+      "currency": "USD",
+      "txn_date": "2024-08-22",
+      "extracted_fields_json": [],
+      "embedding": [],
+      "status": "pending_review",
+      "created_at": "2024-08-22T00:00:00.000Z"
+    },
+    {
+      "id": "cccccccc-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "document_id": "33333333-0000-0000-0000-000000000001",
+      "category": "office_supplies",
+      "amount_cents": 8750,
+      "currency": "USD",
+      "txn_date": "2024-06-10",
+      "extracted_fields_json": [],
+      "embedding": [],
+      "status": "approved",
+      "created_at": "2024-06-10T00:00:00.000Z"
+    }
+  ],
+  "summaries": [
+    {
+      "id": "695aa9ee-303e-42b0-9ff6-cc2f32431a9b",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "period_label": "YTD",
+      "body": "During the review period, the organization recorded total expenditures of $656.27 across three transactions in two spending categories. Veterinary expenses represented the largest share, totaling $568.77 across two transactions; of this, $244.69 has been approved while $324.08 remains pending review. Office supply purchases totaled $87.50 and have been fully approved.\n\nA notable trend is that veterinary costs account for approximately 87 percent of total spending, suggesting this category warrants close attention in future budget planning. The single pending transaction—a veterinary expense—should be prioritized for review to ensure timely record closure.\n\nOverall, approved expenditures total $332.19 and pending expenditures total $324.08. Leadership is encouraged to complete the outstanding review to maintain an accurate picture of committed funds for the current period.",
+      "created_at": "2026-08-17T19:35:15.917Z"
+    },
+    {
+      "id": "4261feb1-6128-44ff-8dea-e0f24ee71fce",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "period_label": "YTD",
+      "body": "During the review period, the organization recorded total expenditures of $656.27 across three transactions in two spending categories. Veterinary expenses represented the largest share, totaling $568.77 across two transactions; of this, $244.69 has been approved while $324.08 remains pending review. Office supply purchases totaled $87.50 and have been fully approved.\n\nA notable trend is that veterinary costs account for approximately 87 percent of total spending, suggesting this category warrants close attention in future budget planning. The single pending transaction—a veterinary expense—should be prioritized for review to ensure timely record closure.\n\nOverall, approved expenditures total $332.19 and pending expenditures total $324.08. Leadership is encouraged to complete the outstanding review to maintain an accurate picture of committed funds for the current period.",
+      "created_at": "2026-08-17T19:35:25.504Z"
+    }
+  ],
+  "audit_log": [
+    {
+      "id": "729d0682-2fa4-4d0b-8856-74a943b06c7f",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-system",
+      "action": "summary_generated",
+      "target_table": "summaries",
+      "target_id": "695aa9ee-303e-42b0-9ff6-cc2f32431a9b",
+      "detail_json": {
+        "period_label": "YTD"
+      },
+      "created_at": "2026-08-17T19:35:15.919Z"
+    },
+    {
+      "id": "f54c9cc9-aa61-427d-b1d4-56eb07c02130",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-system",
+      "action": "summary_generated",
+      "target_table": "summaries",
+      "target_id": "4261feb1-6128-44ff-8dea-e0f24ee71fce",
+      "detail_json": {
+        "period_label": "YTD"
+      },
+      "created_at": "2026-08-17T19:35:25.508Z"
+    }
+  ]
+}
