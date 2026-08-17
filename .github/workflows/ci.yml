@@ -20,6 +20,10 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run lint
       - run: npm run typecheck
+      - name: Run tests
+        run: |
+          npm ci --prefer-offline
+          npm test
 
   db-migrate-dry-run:
     name: Migration dry run
