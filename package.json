@@ -12,7 +12,9 @@
     "test": "vitest",
     "db:migrate": "bash db/migrate.sh",
     "template:generate": "tsx services/ingestion/template-gen/src/cli.ts generate",
-    "template:approve": "tsx services/ingestion/template-gen/src/cli.ts approve"
+    "template:approve": "tsx services/ingestion/template-gen/src/cli.ts approve",
+    "embed:file": "tsx services/ingestion/embeddings/src/cli.ts embed",
+    "search": "tsx services/ingestion/embeddings/src/cli.ts search"
   },
   "devDependencies": {
     "@types/pg": "^8.23.0",

@@ -8,7 +8,7 @@ how" writeup — keep it accurate as you go, don't reconstruct it at the end.
 
 | Category | Tool | Used? | How (fill in as implemented) | First PR |
 |---|---|---|---|---|
-| CockroachDB | Distributed Vector Indexing | ☐ | | |
+| CockroachDB | Distributed Vector Indexing | ☑ | B1 embeddings: transactions.embedding VECTOR(1536) stores Titan embeddings; search.ts uses <-> cosine distance operator for similarity ranking | B1 |
 | CockroachDB | Managed MCP Server | ☐ | | |
 | CockroachDB | Agent Skills Repo | ☐ | | |
 | AWS | S3 | ☐ | | |
