@@ -123,8 +123,9 @@ readiness" is a named judging criterion.
   the project, and — if the issue touches a required tool — one line added
   to `docs/tool-usage.md` describing what the agent actually did with it
   (this file becomes the basis for the submission writeup).
+- **.env file**check .env.example for context on what's in the .env file. API Keys and passwords are only in the .env file.
 
-## 7. Track ownership (see ISSUES.md for the full breakdown)
+## 7. Track ownership
 
 | Track | Focus | Primary tables/services owned |
 |---|---|---|
