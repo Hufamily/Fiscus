@@ -1,0 +1,200 @@
+{
+  "documents": [
+    {
+      "id": "11111111-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "s3_key": "local/vet_invoice_1.txt",
+      "doc_type": "vet_invoice",
+      "status": "approved",
+      "uploaded_by": "cli-system",
+      "created_at": "2024-07-15T00:00:00.000Z"
+    },
+    {
+      "id": "22222222-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "s3_key": "local/vet_invoice_2.txt",
+      "doc_type": "vet_invoice",
+      "status": "pending_review",
+      "uploaded_by": "cli-system",
+      "created_at": "2024-08-22T00:00:00.000Z"
+    },
+    {
+      "id": "33333333-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "s3_key": "local/supply_receipt_1.txt",
+      "doc_type": "supply_receipt",
+      "status": "approved",
+      "uploaded_by": "cli-system",
+      "created_at": "2024-06-10T00:00:00.000Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "aaaaaaaa-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "document_id": "11111111-0000-0000-0000-000000000001",
+      "category": "veterinary",
+      "amount_cents": 24469,
+      "currency": "USD",
+      "txn_date": "2024-07-15",
+      "extracted_fields_json": [],
+      "embedding": [],
+      "status": "approved",
+      "created_at": "2024-07-15T00:00:00.000Z"
+    },
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "document_id": "22222222-0000-0000-0000-000000000001",
+      "category": "veterinary",
+      "amount_cents": 32408,
+      "currency": "USD",
+      "txn_date": "2024-08-22",
+      "extracted_fields_json": [],
+      "embedding": [],
+      "status": "pending_review",
+      "created_at": "2024-08-22T00:00:00.000Z"
+    },
+    {
+      "id": "cccccccc-0000-0000-0000-000000000001",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "document_id": "33333333-0000-0000-0000-000000000001",
+      "category": "office_supplies",
+      "amount_cents": 8750,
+      "currency": "USD",
+      "txn_date": "2024-06-10",
+      "extracted_fields_json": [],
+      "embedding": [],
+      "status": "approved",
+      "created_at": "2024-06-10T00:00:00.000Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "46da5b85-b9da-4f75-9129-5e59063384fc",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "volunteer_id": "cli-volunteer",
+      "pending_documents": {
+        "conversation": [
+          {
+            "question": "what's pending review?",
+            "answer": "One transaction is pending review: a veterinary expense of $324.08 dated 2024-08-22."
+          },
+          {
+            "question": "what about supplies?",
+            "answer": "Office supply expenses total $87.50 (1 transaction, approved, 2024-06-10)."
+          }
+        ]
+      },
+      "current_index": 0,
+      "updated_at": "2026-08-17T19:27:06.687Z"
+    },
+    {
+      "id": "e513e059-ddb7-42b1-87c1-e24fc2a3fb7e",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "volunteer_id": "cli-volunteer",
+      "pending_documents": {
+        "conversation": [
+          {
+            "question": "total spend this year",
+            "answer": "Total expenditures are $656.27 across 3 transactions: veterinary $568.77 (2 transactions) and office supplies $87.50 (1 transaction)."
+          }
+        ]
+      },
+      "current_index": 0,
+      "updated_at": "2026-08-17T19:26:57.516Z"
+    },
+    {
+      "id": "353dd20b-f141-44e3-b639-d889a129df8c",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "volunteer_id": "cli-volunteer",
+      "pending_documents": {
+        "conversation": [
+          {
+            "question": "how much on vet bills?",
+            "answer": "Veterinary expenses total $568.77: $244.69 (approved, 2024-07-15) and $324.08 (pending review, 2024-08-22)."
+          }
+        ]
+      },
+      "current_index": 0,
+      "updated_at": "2026-08-17T19:26:58.417Z"
+    },
+    {
+      "id": "39a59ff2-7255-4d6f-96cd-46c58aa793db",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "volunteer_id": "cli-volunteer",
+      "pending_documents": {
+        "conversation": [
+          {
+            "question": "what's the CEO's salary?",
+            "answer": "I don't have that information."
+          }
+        ]
+      },
+      "current_index": 0,
+      "updated_at": "2026-08-17T19:27:14.877Z"
+    }
+  ],
+  "audit_log": [
+    {
+      "id": "064c1037-cbb6-4bc0-9a62-c39b7f84289f",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-volunteer",
+      "action": "agent_answered",
+      "target_table": "sessions",
+      "target_id": "46da5b85-b9da-4f75-9129-5e59063384fc",
+      "detail_json": {
+        "question": "what's pending review?"
+      },
+      "created_at": "2026-08-17T19:26:50.254Z"
+    },
+    {
+      "id": "52c51a78-7520-44f7-8fa7-737625d79ab4",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-volunteer",
+      "action": "agent_answered",
+      "target_table": "sessions",
+      "target_id": "e513e059-ddb7-42b1-87c1-e24fc2a3fb7e",
+      "detail_json": {
+        "question": "total spend this year"
+      },
+      "created_at": "2026-08-17T19:26:57.518Z"
+    },
+    {
+      "id": "5d351def-f906-40a9-ba6f-d30952f507ea",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-volunteer",
+      "action": "agent_answered",
+      "target_table": "sessions",
+      "target_id": "353dd20b-f141-44e3-b639-d889a129df8c",
+      "detail_json": {
+        "question": "how much on vet bills?"
+      },
+      "created_at": "2026-08-17T19:26:58.419Z"
+    },
+    {
+      "id": "6431c9fa-34f0-4722-838c-eaf8f8654580",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-volunteer",
+      "action": "agent_answered",
+      "target_table": "sessions",
+      "target_id": "46da5b85-b9da-4f75-9129-5e59063384fc",
+      "detail_json": {
+        "question": "what about supplies?"
+      },
+      "created_at": "2026-08-17T19:27:06.689Z"
+    },
+    {
+      "id": "cae41191-4b85-4532-9ef0-c8a2ee6db294",
+      "org_id": "00000000-0000-0000-0000-000000000001",
+      "actor_id": "cli-volunteer",
+      "action": "agent_answered",
+      "target_table": "sessions",
+      "target_id": "39a59ff2-7255-4d6f-96cd-46c58aa793db",
+      "detail_json": {
+        "question": "what's the CEO's salary?"
+      },
+      "created_at": "2026-08-17T19:27:14.879Z"
+    }
+  ]
+}
