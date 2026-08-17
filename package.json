@@ -10,11 +10,20 @@
     "lint": "node scripts/lint.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "db:migrate": "python db/migrate.py"
+    "db:migrate": "bash db/migrate.sh",
+    "template:generate": "tsx services/ingestion/template-gen/src/cli.ts generate",
+    "template:approve": "tsx services/ingestion/template-gen/src/cli.ts approve"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.0",
+    "tsx": "^4.23.12",
     "typescript": "5.7.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1111.0",
+    "pg": "^8.23.0",
+    "zod": "^4.4.3"
   }
 }

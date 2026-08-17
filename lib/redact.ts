@@ -88,3 +88,8 @@ export function redactText(input: string): { redacted: string; findings: Finding
 }
 
 export { Finding };
+
+// Convenience wrapper: returns only the redacted string (B2 usage).
+export function redact(text: string): string {
+  return redactText(text).redacted;
+}
