@@ -10,7 +10,7 @@
     "lint": "node scripts/lint.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "db:migrate": "bash db/migrate.sh"
+    "db:migrate": "python db/migrate.py"
   },
   "devDependencies": {
     "typescript": "5.7.3",
