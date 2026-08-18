@@ -1,13 +1,40 @@
-// Vector similarity search over transactions.
-// Mock: returns stored rows in insertion order with synthetic distances.
-// Real: uses CockroachDB's <-> cosine distance operator.
+// B3: semantic form/transaction search.
+// Mock: ranks by real L2 distance against stored fixture embeddings.
+// Real: uses CockroachDB's <-> (vector_l2_ops) distance operator.
+//
+// `searchSimilarTransactions` / `searchSimilarTemplates` are the reusable,
+// API-shaped entry points — services/api (issue #26) imports these directly
+// rather than the CLI-only `runSearch` below.
 
 import { embed } from '../../../../lib/embeddings';
-import { searchTransactions } from './client';
+import { searchTransactions, searchTemplates } from './client';
+import type { SearchResult, TemplateSearchResult } from './types';
+
+/** Given a free-text query, return the top-k most similar transactions. */
+export async function searchSimilarTransactions(query: string, k = 5): Promise<SearchResult[]> {
+  const queryEmbedding = await embed(query);
+  return searchTransactions(queryEmbedding, k);
+}
+
+/**
+ * Given a new document's embedding, return the top-k matching templates
+ * ranked by similarity — "which template does this look like?" (B3 spec).
+ */
+export async function searchSimilarTemplates(
+  queryEmbedding: number[],
+  k = 5,
+): Promise<TemplateSearchResult[]> {
+  return searchTemplates(queryEmbedding, k);
+}
+
+/** Same as searchSimilarTemplates, but takes free text instead of a precomputed embedding. */
+export async function searchTemplatesByText(query: string, k = 5): Promise<TemplateSearchResult[]> {
+  const queryEmbedding = await embed(query);
+  return searchTemplates(queryEmbedding, k);
+}
 
 export async function runSearch(query: string, limit = 5): Promise<void> {
-  const queryEmbedding = await embed(query);
-  const results = await searchTransactions(queryEmbedding, limit);
+  const results = await searchSimilarTransactions(query, limit);
 
   if (results.length === 0) {
     console.log('No transactions found. Run embed:file first to populate the database.');

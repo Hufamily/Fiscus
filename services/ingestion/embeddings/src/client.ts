@@ -6,7 +6,10 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
 import pg from 'pg';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
-import type { DocumentRow, TransactionRow, SearchResult, ExtractionResult } from './types';
+import type {
+  DocumentRow, TransactionRow, SearchResult, ExtractionResult,
+  TemplateRow, TemplateSearchResult,
+} from './types';
 
 const { Pool } = pg;
 
@@ -89,12 +92,31 @@ export async function invokeModel(systemPrompt: string, userPrompt: string): Pro
 interface MockDb {
   documents: DocumentRow[];
   transactions: TransactionRow[];
+  templates: TemplateRow[];
   audit_log: unknown[];
 }
 
 function readMockDb(): MockDb {
-  if (!existsSync(MOCK_DB_PATH)) return { documents: [], transactions: [], audit_log: [] };
-  return JSON.parse(readFileSync(MOCK_DB_PATH, 'utf-8')) as MockDb;
+  if (!existsSync(MOCK_DB_PATH)) return { documents: [], transactions: [], templates: [], audit_log: [] };
+  const db = JSON.parse(readFileSync(MOCK_DB_PATH, 'utf-8')) as Partial<MockDb>;
+  // Older fixture snapshots predate the `templates` array — default it rather
+  // than throwing, so this doesn't break existing fixtures.
+  return { documents: [], transactions: [], templates: [], audit_log: [], ...db };
+}
+
+// ── Vector distance (mock mode only) ────────────────────────────────────────────
+// Mirrors CockroachDB's `<->` operator (L2/Euclidean distance, vector_l2_ops —
+// see the VECTOR INDEX definitions in db/migrations/004 and docs/schema.md)
+// so mock-mode ranking and anomaly thresholds behave like real mode, instead of
+// the previous placeholder that just returned insertion order.
+export function l2Distance(a: number[], b: number[]): number {
+  const len = Math.min(a.length, b.length);
+  let sum = 0;
+  for (let i = 0; i < len; i++) {
+    const d = a[i] - b[i];
+    sum += d * d;
+  }
+  return Math.sqrt(sum);
 }
 
 function writeMockDb(db: MockDb): void {
@@ -173,23 +195,85 @@ export async function insertTransaction(
   return result.rows[0];
 }
 
-export async function searchTransactions(queryEmbedding: number[], limit = 5): Promise<SearchResult[]> {
+export interface SearchOpts {
+  /** Exclude a transaction by id — used for nearest-neighbor/anomaly checks so a
+   * transaction never counts itself as its own nearest neighbor. */
+  excludeId?: string;
+}
+
+export async function searchTransactions(
+  queryEmbedding: number[],
+  limit = 5,
+  opts: SearchOpts = {},
+): Promise<SearchResult[]> {
   if (IS_MOCK) {
     const db = readMockDb();
-    // Mock: return stored transactions in insertion order with mock distances.
-    // Real mode uses cosine distance (<->). Documented in README.
-    return db.transactions.slice(0, limit).map((t, i) => ({
-      id: t.id,
-      category: t.category,
-      amount_cents: t.amount_cents,
-      txn_date: t.txn_date,
-      distance: parseFloat((0.10 + i * 0.15).toFixed(2)),
-    }));
+    // Mock: rank by real L2 distance against each stored embedding, same
+    // vector_l2_ops semantics as CockroachDB's `<->` in real mode below —
+    // previously this just returned insertion order with a fake distance.
+    return db.transactions
+      .filter((t) => t.id !== opts.excludeId)
+      .map((t) => ({
+        id: t.id,
+        category: t.category,
+        amount_cents: t.amount_cents,
+        txn_date: t.txn_date,
+        distance: l2Distance(queryEmbedding, t.embedding),
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, limit);
+  }
+  const params: unknown[] = [JSON.stringify(queryEmbedding), ORG_ID, limit];
+  let excludeClause = '';
+  if (opts.excludeId) {
+    params.push(opts.excludeId);
+    excludeClause = `AND id != $${params.length}`;
   }
   const result = await getPool().query<SearchResult>(
     `SELECT id, category, amount_cents, txn_date,
             embedding <-> $1 AS distance
      FROM transactions
+     WHERE org_id = $2 ${excludeClause}
+     ORDER BY embedding <-> $1
+     LIMIT $3`,
+    params,
+  );
+  return result.rows;
+}
+
+export async function updateTransactionStatus(id: string, status: string): Promise<void> {
+  if (IS_MOCK) {
+    const db = readMockDb();
+    const row = db.transactions.find((t) => t.id === id);
+    if (row) {
+      row.status = status;
+      writeMockDb(db);
+    }
+    return;
+  }
+  await getPool().query(`UPDATE transactions SET status = $2 WHERE id = $1`, [id, status]);
+}
+
+// ── Template search (B3: "which template does this look like?") ────────────────
+export async function searchTemplates(
+  queryEmbedding: number[],
+  limit = 5,
+): Promise<TemplateSearchResult[]> {
+  if (IS_MOCK) {
+    const db = readMockDb();
+    return db.templates
+      .map((t) => ({
+        id: t.id,
+        form_type: t.form_type,
+        status: t.status,
+        distance: l2Distance(queryEmbedding, t.embedding),
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, limit);
+  }
+  const result = await getPool().query<TemplateSearchResult>(
+    `SELECT id, form_type, status, embedding <-> $1 AS distance
+     FROM templates
      WHERE org_id = $2
      ORDER BY embedding <-> $1
      LIMIT $3`,

@@ -11,6 +11,7 @@ import {
   invokeModel, getMockExtraction, insertDocument, insertTransaction,
   IS_MOCK, ORG_ID,
 } from './client';
+import { checkAndFlagAnomaly } from './anomaly';
 
 const EXTRACTION_SYSTEM = `You are a financial document field extractor.
 Given a redacted financial document, output ONLY valid JSON matching this shape exactly:
@@ -81,10 +82,16 @@ export async function embedFiles(
       s3_key: doc.s3_key,
     });
 
+    // B3: flag it for review if it doesn't resemble anything else on file —
+    // audit-logged inside checkAndFlagAnomaly when it fires.
+    const { flagged } = await checkAndFlagAnomaly(txn.id, embedding, { orgId: ORG_ID });
+    if (flagged) txn.status = 'review_flagged';
+
     results.push(txn);
     console.log(
       `  ✓ ${path.basename(fp)} → txn ${txn.id}  ` +
-      `[${extraction.category}  $${(extraction.amount_cents / 100).toFixed(2)}  ${extraction.txn_date}]`,
+      `[${extraction.category}  $${(extraction.amount_cents / 100).toFixed(2)}  ${extraction.txn_date}]` +
+      (flagged ? '  ⚠ review_flagged (anomaly: no similar transactions on file)' : ''),
     );
   }
 
