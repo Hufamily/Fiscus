@@ -25,6 +25,20 @@ jobs:
           npm ci --prefer-offline
           npm test
 
+  web-build:
+    name: services/web typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: services/web
+        run: npm install --ignore-scripts
+      - name: Typecheck + build (mock-backed, no credentials needed)
+        working-directory: services/web
+        run: npm run build
+
   db-migrate-dry-run:
     name: Migration dry run
     runs-on: ubuntu-latest
