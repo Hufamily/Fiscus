@@ -79,7 +79,7 @@ export async function invokeModel(systemPrompt: string, userPrompt: string): Pro
     inferenceConfig: { maxTokens: 1024, temperature: 0 },
   }));
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  if (!block || !('text' in block) || !block.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;

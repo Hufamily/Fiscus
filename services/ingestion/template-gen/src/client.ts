@@ -58,7 +58,7 @@ export async function invokeModel(systemPrompt: string, userPrompt: string, form
   }));
 
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  if (!block || !('text' in block) || !block.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;

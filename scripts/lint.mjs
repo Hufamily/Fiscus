@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 const roots = ["lib", "services"];
 const sourceExtensions = new Set([".ts", ".mts", ".cts", ".js", ".mjs", ".cjs"]);
+const skipDirs = new Set(["node_modules", "dist", "build", ".git"]);
 const failures = [];
 
 async function visit(directory) {
@@ -17,6 +18,7 @@ async function visit(directory) {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
+      if (skipDirs.has(entry.name)) continue;
       await visit(path);
     } else if (sourceExtensions.has(entry.name.slice(entry.name.lastIndexOf(".")))) {
       const lines = (await readFile(path, "utf8")).split(/\r?\n/);
