@@ -5,7 +5,7 @@
 // §5.1).
 
 import { redact } from '../../../../lib/redact';
-import { converse, type ConverseBlock } from './client';
+import { converse, type ContentBlock } from './client';
 import type { ContentType, ExtractionResult, LineItem } from './types';
 
 export class TerminalExtractionError extends Error {
@@ -25,11 +25,17 @@ export async function extractReceipt(
   content: Uint8Array,
   contentType: ContentType,
 ): Promise<ExtractionResult> {
-  let blocks: ConverseBlock[];
+  let blocks: ContentBlock[];
   if (contentType === 'application/pdf') {
-    blocks = [{ document: { format: 'pdf', name: 'financial-document', source: { bytes: content } } }, { text: INSTRUCTION }];
+    blocks = [
+      { document: { format: 'pdf', name: 'financial-document', source: { bytes: content } } },
+      { text: INSTRUCTION },
+    ];
   } else if (contentType === 'image/jpeg' || contentType === 'image/png') {
-    blocks = [{ image: { format: contentType === 'image/png' ? 'png' : 'jpeg', source: { bytes: content } } }, { text: INSTRUCTION }];
+    blocks = [
+      { image: { format: contentType === 'image/png' ? 'png' : 'jpeg', source: { bytes: content } } },
+      { text: INSTRUCTION },
+    ];
   } else {
     throw new TerminalExtractionError('Unsupported uploaded document type');
   }

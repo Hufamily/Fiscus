@@ -8,6 +8,7 @@ import path from 'path';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import pg from 'pg';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
+import type { ContentBlock } from '@aws-sdk/client-bedrock-runtime';
 
 const { Pool } = pg;
 
@@ -21,13 +22,13 @@ export const IS_MOCK = !DB_URL;
 export const SYSTEM_ACTOR = 's3-lambda-bedrock';
 
 // ── Bedrock ───────────────────────────────────────────────────────────────
-export interface ConverseBlock {
-  text?: string;
-  document?: { format: string; name: string; source: { bytes: Uint8Array } };
-  image?: { format: string; source: { bytes: Uint8Array } };
-}
+// Re-exported so callers (extract.ts) can build blocks against the SDK's
+// own ContentBlock union instead of a hand-rolled type — that union
+// requires each member's *other* keys to be absent (not just optional), so
+// a custom interface with all keys optional doesn't structurally match it.
+export type { ContentBlock };
 
-export async function converse(region: string, modelId: string, blocks: ConverseBlock[]): Promise<string> {
+export async function converse(region: string, modelId: string, blocks: ContentBlock[]): Promise<string> {
   const client = new BedrockRuntimeClient({ region });
   const resp = await client.send(new ConverseCommand({
     modelId,
@@ -35,7 +36,7 @@ export async function converse(region: string, modelId: string, blocks: Converse
     inferenceConfig: { maxTokens: 2000, temperature: 0 },
   }));
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  if (!block || !block.text) {
     throw new Error('Bedrock returned no extraction text');
   }
   return block.text;
