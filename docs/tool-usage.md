@@ -8,7 +8,7 @@ how" writeup — keep it accurate as you go, don't reconstruct it at the end.
 
 | Category | Tool | Used? | How (fill in as implemented) | First PR |
 |---|---|---|---|---|
-| CockroachDB | Distributed Vector Indexing | ☑ | B1 embeddings: transactions.embedding VECTOR(1536) stores Titan embeddings; search.ts uses <-> cosine distance operator for similarity ranking | B1 |
+| CockroachDB | Distributed Vector Indexing | ☑ | B1 embeddings: transactions.embedding VECTOR(1536) stores Titan embeddings; search.ts uses `<->` for similarity ranking. A1 added the actual `CREATE VECTOR INDEX` (org_id, embedding) on templates and transactions — before A1 there was no index behind the `<->` queries, just a full scan; confirmed via `SHOW CREATE TABLE` and `EXPLAIN` that org-scoped similarity queries now plan through the index. See docs/schema.md. | B1 (storage/query), A1 (actual index) |
 | CockroachDB | Managed MCP Server | ☐ | | |
 | CockroachDB | Agent Skills Repo | ☐ | | |
 | AWS | S3 | ☐ | | |

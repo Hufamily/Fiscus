@@ -40,33 +40,75 @@ Raw doc ──► S3 ──► Lambda ──────┘      ├─ vector i
 
 ## 4. Data model conventions (owned by Track A — do not fork this schema)
 
-All tables live in one CockroachDB database, `orgfinance`. Every
-tenant-scoped table carries `org_id UUID NOT NULL` for multi-tenant isolation,
-even in the demo. `organizations` is the tenant root and is the sole
-exception.
+**This section is generated/verified against the live shared CockroachDB
+Cloud dev cluster, not aspirational.** Last verified 2026-08-18 against
+migrations `001`-`005` (see `db/migrations/`); full `SHOW CREATE TABLE` /
+`SHOW INDEXES` dump lives in [`docs/schema.md`](docs/schema.md). If you
+change the schema, **you must update both this section and
+`docs/schema.md` in the same PR** — see the enforcement rule in §6, CI
+will fail the PR otherwise.
 
-Core tables (exact DDL lives in issue `A1`; this is the contract other
-tracks code against):
+All tables live in the cluster's `defaultdb` database (the CockroachDB
+Cloud default — see `COCKROACH_DATABASE_URL` in `.env`). Earlier drafts of
+this file called it `orgfinance`; that name was never actually applied
+anywhere and the shared cluster has run as `defaultdb` since A1 first
+applied migrations to it. `defaultdb` is the real name going forward —
+don't reintroduce `orgfinance` in code or docs.
 
-- `organizations(id, name, retention_years INT NOT NULL DEFAULT 7, created_at)`
-- `volunteers(id, org_id, role, display_name)` — `role` is an enum:
-  `data_entry`, `reviewer`, `treasurer`, `leadership`
-- `documents(id, org_id, s3_key, doc_type, status, uploaded_by, created_at)`
-  — never store raw file bytes here, only the S3 pointer
-- `templates(id, org_id, form_type, schema_json, embedding VECTOR(1536),
-  status)` — `status` is `pending_review` until a reviewer approves it
-- `transactions(id, org_id, document_id, category, amount_cents, currency,
-  txn_date, extracted_fields_json, embedding VECTOR(1536), status)`
-- `corrections(id, org_id, transaction_id, field, original_value,
-  corrected_value, corrected_by, created_at)` — this is the "learned memory"
-  table; the agent reads recent corrections for an org before extracting
-  new documents of the same type
-- `audit_log(id, org_id, actor_id, action, target_table, target_id,
-  detail_json, created_at)` — append-only, every write from every track goes
-  through the audit helper (see §6), no exceptions
-- `sessions(id, org_id, volunteer_id, pending_documents JSONB, current_index,
-  updated_at)` — persistent agent task state; this is owned jointly by Tracks
-  A and C and is added through a joint migration
+Every tenant-scoped table carries `org_id UUID NOT NULL` for multi-tenant
+isolation, even in the demo. `organizations` is the tenant root and is the
+sole exception.
+
+Core tables, as actually created by `db/migrations/001`-`004`:
+
+- `organizations(id UUID PK, name TEXT, retention_years INT DEFAULT 7, created_at)`
+- `volunteers(id UUID PK, org_id FK, role, display_name)` — `role` is a
+  real CockroachDB `ENUM` type (`volunteer_role`): `data_entry`,
+  `reviewer`, `treasurer`, `leadership`
+- `documents(id UUID PK, org_id FK, s3_key, doc_type, status, uploaded_by, created_at)`
+  — never store raw file bytes here, only the S3 pointer. `status` has a
+  `CHECK (status IN ('uploaded','extracting','needs_review','approved','rejected'))`
+  from B1's stopgap migration (002); this predates A1 and wasn't loosened
+  even though the intent was an open vocabulary — flagged as an open
+  question in `docs/schema.md` for whoever owns `documents.status` to
+  confirm/fix. `uploaded_by` is plain `TEXT`, not a FK to `volunteers` —
+  the ingestion pipeline also writes system-actor labels (e.g.
+  `'cli-system'`) here, not just human volunteers.
+- `templates(id UUID PK, org_id FK, form_type, schema_json JSONB,
+  embedding VECTOR(1536), status, created_at)` — `status` is
+  `CHECK (status IN ('pending_review','approved'))`, matching this file's
+  original intent exactly. `VECTOR INDEX templates_org_embedding_idx
+  (org_id, embedding vector_l2_ops)` is live (added in A1/004).
+- `transactions(id UUID PK, org_id FK, document_id FK, category,
+  amount_cents, currency, txn_date, extracted_fields_json JSONB,
+  embedding VECTOR(1536), status, created_at)` — same open-status-vocab
+  flag as `documents.status` applies here (`CHECK` added by B1's 002,
+  predates A1). `VECTOR INDEX transactions_org_embedding_idx (org_id,
+  embedding vector_l2_ops)` is live (added in A1/004), plus a plain
+  `(org_id, created_at DESC)` index from B1.
+- `corrections(id UUID PK, org_id FK, transaction_id FK, field,
+  original_value, corrected_value, corrected_by UUID NOT NULL FK ->
+  volunteers, created_at)` — this is the "learned memory" table; the
+  agent reads recent corrections for an org before extracting new
+  documents of the same type. Added in A1/004.
+- `audit_log(id UUID PK, org_id FK, actor_id TEXT, action, target_table,
+  target_id, detail_json JSONB, created_at)` — append-only, every write
+  from every track goes through the audit helper (see §6), no exceptions.
+  `actor_id` is untyped `TEXT`, no FK to `volunteers` — the agent itself
+  can be the actor.
+- `sessions(id UUID PK, org_id FK, volunteer_id TEXT, pending_documents
+  JSONB, current_index, updated_at)` — persistent agent task state. Spec
+  says this is owned jointly by Tracks A and C and added through a joint
+  migration; in practice C1 (`003_c1_sessions.sql`) added it solo before
+  A1 ever ran, since nobody had applied migrations to the real cluster
+  yet. Noting what happened, not changing the ownership rule for next
+  time.
+- `summaries(id UUID PK, org_id FK, period_label TEXT, body TEXT,
+  created_at)` — additive table from D2 (`005_d2_summaries.sql`), not part
+  of the original §4 contract; stores Bedrock-generated executive
+  summaries built only from aggregate (`GROUP BY category, status`)
+  queries, never row-level `transactions` data. Generation is gated by
+  D1's `view_aggregate_reports` capability via `lib/rbac.ts`.
 
 Embedding dimension is fixed at 1536 (Bedrock Titan Embeddings default).
 If you change embedding model, update this file and ping the team — every
@@ -76,7 +118,8 @@ For correction-memory lookups, `doc_type` is obtained by joining
 `corrections.transaction_id` through `transactions.document_id` to
 `documents.doc_type`; do not add a duplicate `doc_type` column to
 `corrections`. Semantic similarity uses the related transaction embedding and
-must always be filtered by `org_id`.
+must always be filtered by `org_id` — both vector indexes are prefixed on
+`org_id` for exactly this, so an unfiltered query won't use the index.
 
 ## 5. Security and data-handling rules (non-negotiable)
 
@@ -116,15 +159,33 @@ readiness" is a named judging criterion.
   `main` require one review from a teammate on a different track — this is
   how we catch integration breaks early, given four people building in
   parallel.
+- **Git workflow for agents (human or Codex/Claude/etc.):** push only to a
+  `track/{a,b,c,d}/{issue-number}-{short-desc}` branch, never directly to
+  `main`. Land changes as new commits — don't amend or rebase-rewrite a
+  commit that's already been pushed, since teammates may have already
+  fetched it. Opening the PR into `main` is a manual, human step; an agent
+  finishing work on a branch should stop there and hand it back rather than
+  running `gh pr create` itself.
 - **Environment parity:** one shared CockroachDB Cloud cluster for dev, one
   for demo. Don't create ad hoc local schemas that drift from §4.
+- **Schema changes force a doc update, in the same PR — CI enforces this.**
+  Any PR that adds/edits a file under `db/migrations/` must also touch
+  `AGENTS.md` and `docs/schema.md` in that same PR, or the
+  `schema-docs-sync` CI job fails the build (see `.github/workflows/ci.yml`).
+  This exists because §4 drifted from reality once already: 001-003 sat in
+  `db/migrations/` for a while without ever being applied to the real
+  cluster, and this file kept describing a `orgfinance` database that
+  never existed. Don't rely on remembering to update the docs — regenerate
+  `docs/schema.md` from `SHOW CREATE TABLE`/`SHOW INDEXES` against the real
+  cluster and hand-edit the §4 summary to match before you open the PR.
 - **Definition of done for any issue:** code merged, audit logging in place
   for any new write path, README section updated if it changes how to run
   the project, and — if the issue touches a required tool — one line added
   to `docs/tool-usage.md` describing what the agent actually did with it
   (this file becomes the basis for the submission writeup).
+- **.env file**check .env.example for context on what's in the .env file. API Keys and passwords are only in the .env file.
 
-## 7. Track ownership (see ISSUES.md for the full breakdown)
+## 7. Track ownership
 
 | Track | Focus | Primary tables/services owned |
 |---|---|---|
