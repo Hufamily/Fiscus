@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { RoleSwitcher } from "./RoleSwitcher";
 import { SearchBar } from "./SearchBar";
+import { ApiFallbackBanner } from "./ApiFallbackBanner";
 import { useSession } from "../lib/session";
 import { can } from "../lib/rbac";
 
@@ -60,6 +61,7 @@ export function Layout() {
           </div>
         )}
       </header>
+      <ApiFallbackBanner />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <Outlet />
       </main>

@@ -37,7 +37,7 @@ export function LeadershipDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-3xl font-medium tracking-tight">Leadership dashboard</h1>
           <p className="mt-1 text-sm text-faint">Aggregate view only. No row-level transactions are exposed to this role.</p>
