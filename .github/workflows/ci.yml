@@ -38,3 +38,30 @@ jobs:
         env:
           COCKROACH_DATABASE_URL: ${{ secrets.COCKROACH_DATABASE_URL }}
         run: bash db/migrate.sh --dry-run
+
+  schema-docs-sync:
+    name: Schema changes must update AGENTS.md + docs/schema.md
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require AGENTS.md and docs/schema.md to change alongside db/migrations
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if ! git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- db/migrations | grep -q .; then
+            echo "No changes under db/migrations/ in this PR — nothing to enforce."
+            exit 0
+          fi
+          echo "db/migrations/ changed in this PR. Checking AGENTS.md and docs/schema.md were updated too..."
+          MISSING=""
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- AGENTS.md | grep -q . || MISSING="$MISSING AGENTS.md"
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- docs/schema.md | grep -q . || MISSING="$MISSING docs/schema.md"
+          if [ -n "$MISSING" ]; then
+            echo "::error::This PR changes db/migrations/ but doesn't update:$MISSING. Per AGENTS.md §4/§6, schema changes must update the shared contract docs in the same PR."
+            exit 1
+          fi
+          echo "OK: schema docs updated alongside the migration change."
