@@ -42,7 +42,7 @@ Raw doc ──► S3 ──► Lambda ──────┘      ├─ vector i
 
 **This section is generated/verified against the live shared CockroachDB
 Cloud dev cluster, not aspirational.** Last verified 2026-08-18 against
-migrations `001`-`004` (see `db/migrations/`); full `SHOW CREATE TABLE` /
+migrations `001`-`005` (see `db/migrations/`); full `SHOW CREATE TABLE` /
 `SHOW INDEXES` dump lives in [`docs/schema.md`](docs/schema.md). If you
 change the schema, **you must update both this section and
 `docs/schema.md` in the same PR** — see the enforcement rule in §6, CI
@@ -103,6 +103,12 @@ Core tables, as actually created by `db/migrations/001`-`004`:
   A1 ever ran, since nobody had applied migrations to the real cluster
   yet. Noting what happened, not changing the ownership rule for next
   time.
+- `summaries(id UUID PK, org_id FK, period_label TEXT, body TEXT,
+  created_at)` — additive table from D2 (`005_d2_summaries.sql`), not part
+  of the original §4 contract; stores Bedrock-generated executive
+  summaries built only from aggregate (`GROUP BY category, status`)
+  queries, never row-level `transactions` data. Generation is gated by
+  D1's `view_aggregate_reports` capability via `lib/rbac.ts`.
 
 Embedding dimension is fixed at 1536 (Bedrock Titan Embeddings default).
 If you change embedding model, update this file and ping the team — every
