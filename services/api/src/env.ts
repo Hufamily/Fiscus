@@ -9,7 +9,7 @@
 // their own package-local fixtures/mock-db.json. Whichever import happens
 // last "wins" that race. This file's override below is applied from
 // server.ts *after* all of those imports run, so it deterministically wins
-// instead â€” every write in a single server process (ours and the delegated
+// instead: every write in a single server process (ours and the delegated
 // modules') lands in one shared fixtures/mock-db.json, which is what makes
 // the mock-mode integration tests (and the mock-mode demo) internally
 // consistent across endpoints.
