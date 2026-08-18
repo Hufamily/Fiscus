@@ -38,6 +38,7 @@ export function ReviewQueuePage() {
             <Link to="/upload" className="mt-3 inline-block rounded-full bg-moss px-4 py-2 text-sm font-semibold text-white hover:bg-moss-dark">Upload a document</Link>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-hairline text-left text-xs uppercase tracking-wider text-faint">
@@ -66,6 +67,7 @@ export function ReviewQueuePage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </div>
