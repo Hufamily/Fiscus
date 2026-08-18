@@ -1,10 +1,12 @@
 // Bedrock Titan Embeddings helper — shared across tracks (B1 interface start).
-// Real mode: calls amazon.titan-embed-text-v2:0 (1536 dims, fixed per AGENTS.md §4).
+// Real mode: calls amazon.titan-embed-text-v1 (Titan Embeddings G1 — natively 1536 dims,
+// matching AGENTS.md §4). NOTE: titan-embed-text-v2 does NOT support 1536 (only 256/512/1024);
+// requesting 1536 from v2 is what caused the 'only 1 subschema matches' Bedrock error.
 // Mock mode: deterministic sine-based floats derived from text hash.
 
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 
-const TITAN_MODEL = 'amazon.titan-embed-text-v2:0';
+const TITAN_MODEL = process.env.BEDROCK_EMBED_MODEL_ID ?? 'amazon.titan-embed-text-v1';
 
 function mockEmbed(text: string): number[] {
   let seed = 0;
@@ -26,7 +28,7 @@ export async function embed(text: string): Promise<number[]> {
   });
   const resp = await client.send(new InvokeModelCommand({
     modelId: TITAN_MODEL,
-    body: JSON.stringify({ inputText: text, dimensions: 1536, normalize: true }),
+    body: JSON.stringify({ inputText: text }), // G1 takes inputText only; outputs 1536 dims
     contentType: 'application/json',
     accept: 'application/json',
   }));

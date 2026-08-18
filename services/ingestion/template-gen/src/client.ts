@@ -21,7 +21,7 @@ const DB_URL = process.env.DATABASE_URL ?? process.env.COCKROACH_DATABASE_URL;
 const HAS_AWS = !!(process.env.AWS_ACCESS_KEY_ID || process.env.AWS_PROFILE);
 export const IS_MOCK = !DB_URL || !HAS_AWS;
 
-const BEDROCK_MODEL = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-3-5-haiku-20241022-v1:0';
+const BEDROCK_MODEL = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
 
 export const ORG_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -57,8 +57,14 @@ export async function invokeModel(systemPrompt: string, userPrompt: string, form
     inferenceConfig: { maxTokens: 4096, temperature: 0 },
   }));
 
-  const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  // Converse API content blocks have no `type` discriminator — they're shaped
+  // { text } | { reasoningContent } | { toolUse }. Hybrid-reasoning models
+  // (Haiku 4.5+) may emit a reasoning block before the text block, so find the
+  // first block that actually carries text rather than assuming content[0].
+  const block = resp.output?.message?.content?.find(
+    (b): b is { text: string } => typeof (b as { text?: unknown }).text === 'string',
+  );
+  if (!block?.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;
