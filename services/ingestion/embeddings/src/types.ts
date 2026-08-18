@@ -61,3 +61,28 @@ export interface TemplateSearchResult {
   status: string;
   distance: number;
 }
+
+// ── corrections (owned by Track C — "learned memory" table, see AGENTS.md §4) ──
+// doc_type is intentionally not a column here — joined via transaction_id ->
+// transactions.document_id -> documents.doc_type, per AGENTS.md §4/§6.
+export interface CorrectionRow {
+  id: string;
+  org_id: string;
+  transaction_id: string;
+  field: string;
+  original_value: string | null;
+  corrected_value: string;
+  corrected_by: string;
+  created_at: string;
+}
+
+/** A past correction whose transaction resembles the document currently being
+ * extracted, ranked by the same L2 distance semantics as searchTransactions. */
+export interface CorrectionMemoryMatch {
+  correctionId: string;
+  transactionId: string;
+  field: string;
+  originalValue: string | null;
+  correctedValue: string;
+  distance: number;
+}

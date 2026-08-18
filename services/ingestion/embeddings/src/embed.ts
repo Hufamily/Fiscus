@@ -12,6 +12,7 @@ import {
   IS_MOCK, ORG_ID,
 } from './client';
 import { checkAndFlagAnomaly } from './anomaly';
+import { applyCorrectionMemory } from './corrections-memory';
 
 const EXTRACTION_SYSTEM = `You are a financial document field extractor.
 Given a redacted financial document, output ONLY valid JSON matching this shape exactly:
@@ -68,9 +69,19 @@ export async function embedFiles(
       console.error(`\n[mock] Redacted text sent to Bedrock for ${path.basename(fp)}:\n${redacted.slice(0, 200)}…\n`);
     }
 
-    const extraction = await extractFields(redacted, docType);
-    const embeddingText = `${docType} ${extraction.category} ${extraction.amount_cents} ${extraction.txn_date}`;
+    const rawExtraction = await extractFields(redacted, docType);
+    const embeddingText = `${docType} ${rawExtraction.category} ${rawExtraction.amount_cents} ${rawExtraction.txn_date}`;
     const embedding = await embed(embeddingText);
+
+    // C3: before finalizing, check whether this org has corrected the same
+    // mistake on similar doc_type documents before, and if so apply the
+    // known field mapping now rather than making the volunteer fix it again.
+    // "before" is rawExtraction (what Bedrock/mock produced); "after" is
+    // extraction below (what actually gets persisted) — logged distinctly
+    // from a fresh extraction so the demo can show the two side by side.
+    const { extraction, applied, suggestions } = await applyCorrectionMemory(
+      ORG_ID, docType, rawExtraction, embedding,
+    );
 
     const doc = await insertDocument(`local/${path.basename(fp)}`, docType);
     const txn = await insertTransaction(doc.id, extraction, embedding);
@@ -80,7 +91,26 @@ export async function embedFiles(
       category: extraction.category,
       amount_cents: extraction.amount_cents,
       s3_key: doc.s3_key,
+      memory_adjusted: applied.length > 0,
     });
+
+    // Distinct from 'fields_extracted' above so logs/UI can tell "the agent
+    // read this fresh" apart from "memory changed the outcome" — acceptance
+    // criterion: clearly distinguishable when memory changed the outcome.
+    if (applied.length > 0) {
+      await logAction(ORG_ID, 'cli-system', 'extraction_adjusted_from_memory', 'transactions', txn.id, {
+        doc_type: docType,
+        before: { fields: applied.map((a) => ({ field: a.field, value: a.fromValue })) },
+        after: { fields: applied.map((a) => ({ field: a.field, value: a.toValue })) },
+        adjustments: applied,
+      });
+    }
+    if (suggestions.length > 0) {
+      await logAction(ORG_ID, 'cli-system', 'extraction_memory_suggested', 'transactions', txn.id, {
+        doc_type: docType,
+        suggestions,
+      });
+    }
 
     // B3: flag it for review if it doesn't resemble anything else on file —
     // audit-logged inside checkAndFlagAnomaly when it fires.
@@ -91,6 +121,7 @@ export async function embedFiles(
     console.log(
       `  ✓ ${path.basename(fp)} → txn ${txn.id}  ` +
       `[${extraction.category}  $${(extraction.amount_cents / 100).toFixed(2)}  ${extraction.txn_date}]` +
+      (applied.length > 0 ? `  🧠 memory-adjusted (${applied.map((a) => a.field).join(', ')})` : '') +
       (flagged ? '  ⚠ review_flagged (anomaly: no similar transactions on file)' : ''),
     );
   }

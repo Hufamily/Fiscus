@@ -8,7 +8,7 @@ import pg from 'pg';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import type {
   DocumentRow, TransactionRow, SearchResult, ExtractionResult,
-  TemplateRow, TemplateSearchResult,
+  TemplateRow, TemplateSearchResult, CorrectionRow, CorrectionMemoryMatch,
 } from './types';
 
 const { Pool } = pg;
@@ -82,7 +82,11 @@ export async function invokeModel(systemPrompt: string, userPrompt: string): Pro
     inferenceConfig: { maxTokens: 1024, temperature: 0 },
   }));
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  // The AWS SDK's ContentBlock union has no `type` discriminant field, so
+  // `block.type !== 'text'` doesn't compile — check for the `text` member
+  // directly instead (see CLAUDE.md's CI-widening session learnings, same
+  // fix applied to the agent/summaries/template-gen Bedrock clients).
+  if (!block || !('text' in block) || !block.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;
@@ -93,15 +97,18 @@ interface MockDb {
   documents: DocumentRow[];
   transactions: TransactionRow[];
   templates: TemplateRow[];
+  corrections: CorrectionRow[];
   audit_log: unknown[];
 }
 
 function readMockDb(): MockDb {
-  if (!existsSync(MOCK_DB_PATH)) return { documents: [], transactions: [], templates: [], audit_log: [] };
+  if (!existsSync(MOCK_DB_PATH)) {
+    return { documents: [], transactions: [], templates: [], corrections: [], audit_log: [] };
+  }
   const db = JSON.parse(readFileSync(MOCK_DB_PATH, 'utf-8')) as Partial<MockDb>;
-  // Older fixture snapshots predate the `templates` array — default it rather
-  // than throwing, so this doesn't break existing fixtures.
-  return { documents: [], transactions: [], templates: [], audit_log: [], ...db };
+  // Older fixture snapshots predate the `templates`/`corrections` arrays —
+  // default them rather than throwing, so this doesn't break existing fixtures.
+  return { documents: [], transactions: [], templates: [], corrections: [], audit_log: [], ...db };
 }
 
 // ── Vector distance (mock mode only) ────────────────────────────────────────────
@@ -280,4 +287,68 @@ export async function searchTemplates(
     [JSON.stringify(queryEmbedding), ORG_ID, limit],
   );
   return result.rows;
+}
+
+// ── Correction memory (C3: "have we made this mistake before?") ────────────────
+// Finds past `corrections` whose linked transaction resembles the document
+// currently being extracted, restricted to the same org and doc_type — per
+// AGENTS.md §4: "join corrections.transaction_id through
+// transactions.document_id to documents.doc_type... must always be filtered
+// by org_id". Ranked by the same L2 distance semantics as searchTransactions/
+// searchTemplates so mock and real mode agree.
+export async function searchCorrectionMemory(
+  orgId: string,
+  docType: string,
+  queryEmbedding: number[],
+  limit = 10,
+): Promise<CorrectionMemoryMatch[]> {
+  if (IS_MOCK) {
+    const db = readMockDb();
+    const docsByType = new Map(
+      db.documents.filter((d) => d.org_id === orgId && d.doc_type === docType).map((d) => [d.id, d]),
+    );
+    const txnsById = new Map(
+      db.transactions
+        .filter((t) => t.org_id === orgId && docsByType.has(t.document_id))
+        .map((t) => [t.id, t]),
+    );
+    return db.corrections
+      .filter((c) => c.org_id === orgId && txnsById.has(c.transaction_id))
+      .map((c) => ({
+        correctionId: c.id,
+        transactionId: c.transaction_id,
+        field: c.field,
+        originalValue: c.original_value,
+        correctedValue: c.corrected_value,
+        distance: l2Distance(queryEmbedding, txnsById.get(c.transaction_id)!.embedding),
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, limit);
+  }
+  const result = await getPool().query<{
+    correction_id: string;
+    transaction_id: string;
+    field: string;
+    original_value: string | null;
+    corrected_value: string;
+    distance: number;
+  }>(
+    `SELECT c.id AS correction_id, c.transaction_id, c.field, c.original_value, c.corrected_value,
+            t.embedding <-> $1 AS distance
+     FROM corrections c
+     JOIN transactions t ON t.id = c.transaction_id
+     JOIN documents d ON d.id = t.document_id
+     WHERE c.org_id = $2 AND d.doc_type = $3
+     ORDER BY t.embedding <-> $1
+     LIMIT $4`,
+    [JSON.stringify(queryEmbedding), orgId, docType, limit],
+  );
+  return result.rows.map((r) => ({
+    correctionId: r.correction_id,
+    transactionId: r.transaction_id,
+    field: r.field,
+    originalValue: r.original_value,
+    correctedValue: r.corrected_value,
+    distance: r.distance,
+  }));
 }
