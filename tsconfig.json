@@ -14,6 +14,7 @@
     "test/**/*.ts",
     "services/agent/**/*.ts",
     "services/ingestion/embeddings/**/*.ts",
-    "services/api/summaries/**/*.ts"
+    "services/api/summaries/**/*.ts",
+    "services/ingestion/s3-extraction/**/*.ts"
   ]
 }
