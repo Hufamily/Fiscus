@@ -67,13 +67,18 @@ Core tables, as actually created by `db/migrations/001`-`004`:
   `reviewer`, `treasurer`, `leadership`
 - `documents(id UUID PK, org_id FK, s3_key, doc_type, status, uploaded_by, created_at)`
   — never store raw file bytes here, only the S3 pointer. `status` has a
-  `CHECK (status IN ('uploaded','extracting','needs_review','approved','rejected'))`
-  from B1's stopgap migration (002); this predates A1 and wasn't loosened
-  even though the intent was an open vocabulary — flagged as an open
-  question in `docs/schema.md` for whoever owns `documents.status` to
-  confirm/fix. `uploaded_by` is plain `TEXT`, not a FK to `volunteers` —
-  the ingestion pipeline also writes system-actor labels (e.g.
-  `'cli-system'`) here, not just human volunteers.
+  `CHECK (status IN ('uploaded','extracting','needs_review','approved','rejected','purged'))`
+  from B1's stopgap migration (002), widened by D3's `006` migration to add
+  `'purged'` for the retention lifecycle job; the open-vocabulary question
+  for the original 5 values is still flagged in `docs/schema.md` for
+  whoever owns `documents.status` to confirm/fix. `uploaded_by` is plain
+  `TEXT`, not a FK to `volunteers` — the ingestion pipeline also writes
+  system-actor labels (e.g. `'cli-system'`) here, not just human
+  volunteers. A `'purged'` row means the S3 raw file has been deleted past
+  the org's `retention_years` window (see `D3` /
+  `services/lifecycle/retention`) — `s3_key` is left in place as a
+  historical pointer even though the object behind it is gone;
+  `transactions` rows derived from a purged document are untouched.
 - `templates(id UUID PK, org_id FK, form_type, schema_json JSONB,
   embedding VECTOR(1536), status, created_at)` — `status` is
   `CHECK (status IN ('pending_review','approved'))`, matching this file's

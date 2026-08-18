@@ -26,6 +26,7 @@ Migration history:
 | `003_c1_sessions.sql` | A+C (joint) | `sessions` |
 | `004_a1_volunteers_corrections_indexes.sql` | A1 | `volunteers`, `corrections`, vector indexes on `templates.embedding` and `transactions.embedding` |
 | `005_d2_summaries.sql` | D2 | `summaries` (additive, not in the original §4 contract) |
+| `006_d3_documents_status_purged.sql` | D3 | widens `documents_status_check` to add `'purged'` |
 
 001-003 were written as minimal stopgaps by other tracks so development
 could start before A1 landed (see the comments in each file). This issue
@@ -76,18 +77,31 @@ CREATE TABLE public.documents (
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	CONSTRAINT documents_pkey PRIMARY KEY (id ASC),
 	CONSTRAINT documents_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id),
-	CONSTRAINT documents_status_check CHECK (status IN ('uploaded', 'extracting', 'needs_review', 'approved', 'rejected'))
+	CONSTRAINT documents_status_check CHECK (status IN ('uploaded', 'extracting', 'needs_review', 'approved', 'rejected', 'purged'))
 );
 ```
 
 **Open assumptions (flagging for Track A/B to confirm, not decided here):**
-- `status` has a `CHECK` constraint restricting it to 5 values. AGENTS.md §4
-  says `documents.status` is *not* a fully-enumerated closed vocabulary —
-  this constraint was added by B1's stopgap migration (002) before A1
-  landed. A1 left it as-is rather than loosening it on a live table, since
-  loosening is easy later and tightening after data exists is not. If the
-  open-vocabulary intent matters before submission, drop the CHECK in a
-  follow-up migration.
+- `status` has a `CHECK` constraint restricting it to 6 values (widened from
+  5 by D3's `006_d3_documents_status_purged.sql`, which added `'purged'`).
+  AGENTS.md §4 says `documents.status` is *not* a fully-enumerated closed
+  vocabulary — the original 5-value constraint was added by B1's stopgap
+  migration (002) before A1 landed, and A1 left it as-is rather than
+  loosening it on a live table. D3 widened it (drop + recreate the CHECK,
+  CockroachDB has no single-value `ALTER CONSTRAINT`) only far enough to
+  add the one new terminal status the retention job needs; the broader
+  open-vocabulary question for the original 5 values is unchanged. If the
+  open-vocabulary intent matters before submission, drop the CHECK
+  entirely in a follow-up migration.
+- `'purged'` (D3, `services/lifecycle/retention`): set when the row's raw
+  S3 object has been deleted past the org's `retention_years` window.
+  `s3_key` is left populated as a historical pointer even though the S3
+  object behind it no longer exists — code must not assume a non-`'purged'`
+  status implies the object is present, but should treat `'purged'` as the
+  authoritative "raw file is gone" signal. Purging never touches
+  `transactions` rows derived from the document (see D2 aggregate
+  reporting, which reads only `transactions.category`/`status`/
+  `amount_cents` and never joins back to `documents.s3_key`).
 - `uploaded_by` is `STRING`, not a FK to `volunteers.id`. AGENTS.md §4
   doesn't type this column, and it's already populated by the ingestion
   pipeline with system actor labels (e.g. `'cli-system'`) as well as human
