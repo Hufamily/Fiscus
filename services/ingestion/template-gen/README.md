@@ -45,7 +45,7 @@ Flips the template's status from `pending_review` to `approved`. A second call o
 | `AWS_ACCESS_KEY_ID` | For real mode | AWS credential |
 | `AWS_SECRET_ACCESS_KEY` | For real mode | AWS credential |
 | `AWS_REGION` | Optional | Defaults to `us-east-1` |
-| `BEDROCK_MODEL_ID` | Optional | Defaults to `us.anthropic.claude-3-5-haiku-20241022-v1:0` |
+| `BEDROCK_MODEL_ID` | Optional | Defaults to `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 
 ## Mock vs real mode
 

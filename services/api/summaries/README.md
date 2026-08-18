@@ -28,7 +28,7 @@ npm run summary:generate -- --period YTD --role data_entry   # rejected, audit-l
 | `DATABASE_URL` or `COCKROACH_DATABASE_URL` | Yes | CockroachDB connection string |
 | `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` | Yes | AWS credentials |
 | `AWS_REGION` | No | Defaults to `us-east-1` |
-| `BEDROCK_MODEL_ID` | No | Defaults to `us.anthropic.claude-3-5-haiku-20241022-v1:0` |
+| `BEDROCK_MODEL_ID` | No | Defaults to `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 
 ## Mock vs real mode
 

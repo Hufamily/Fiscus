@@ -1,10 +1,12 @@
 // Bedrock Titan Embeddings helper — shared across tracks (B1 interface start).
-// Real mode: calls amazon.titan-embed-text-v2:0 (1536 dims, fixed per AGENTS.md §4).
+// Real mode: calls amazon.titan-embed-text-v1 (natively 1536 dims, fixed per AGENTS.md §4).
+// Titan v2 only supports dimensions of 256/512/1024 (verified live against Bedrock) — 1536 is
+// not a valid v2 output size, so v1 is used instead to match the schema's fixed vector width.
 // Mock mode: deterministic sine-based floats derived from text hash.
 
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 
-const TITAN_MODEL = 'amazon.titan-embed-text-v2:0';
+const TITAN_MODEL = 'amazon.titan-embed-text-v1';
 
 function mockEmbed(text: string): number[] {
   let seed = 0;
@@ -26,7 +28,7 @@ export async function embed(text: string): Promise<number[]> {
   });
   const resp = await client.send(new InvokeModelCommand({
     modelId: TITAN_MODEL,
-    body: JSON.stringify({ inputText: text, dimensions: 1536, normalize: true }),
+    body: JSON.stringify({ inputText: text }),
     contentType: 'application/json',
     accept: 'application/json',
   }));
