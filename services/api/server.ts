@@ -317,6 +317,9 @@ async function handleApproveTransaction(res: http.ServerResponse, txnId: string,
     const idx = db.transactions.findIndex(t => t.id === txnId && t.org_id === ORG_ID);
     if (idx === -1) { sendJson(res, 404, { error: 'transaction not found' }); return; }
     db.transactions[idx].status = 'approved';
+    // Also flip the parent document so it leaves the review queue (queue reads documents.status).
+    const docIdx = db.documents.findIndex(d => d.id === db.transactions[idx].document_id);
+    if (docIdx !== -1) db.documents[docIdx].status = 'approved';
     writeAgentMock(db);
     await logAction(ORG_ID, subject.volunteerId, 'transaction_approved', 'transactions', txnId, {});
     sendJson(res, 200, mapTransaction(db.transactions[idx]));
@@ -327,6 +330,11 @@ async function handleApproveTransaction(res: http.ServerResponse, txnId: string,
     [txnId, ORG_ID],
   );
   if (!rows[0]) { sendJson(res, 404, { error: 'transaction not found' }); return; }
+  // Also flip the parent document so it leaves the review queue (queue reads documents.status).
+  const approvedDocId = (rows[0] as { document_id?: string | null }).document_id;
+  if (approvedDocId) {
+    await getPool().query("UPDATE documents SET status='approved' WHERE id=$1 AND org_id=$2", [approvedDocId, ORG_ID]);
+  }
   await logAction(ORG_ID, subject.volunteerId, 'transaction_approved', 'transactions', txnId, {});
   sendJson(res, 200, mapTransaction(rows[0] as Parameters<typeof mapTransaction>[0]));
 }
