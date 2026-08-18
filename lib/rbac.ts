@@ -23,12 +23,13 @@ export type Capability =
   | 'apply_corrections'
   | 'approve_templates'
   | 'view_row_level_transactions'
-  | 'view_aggregate_reports';
+  | 'view_aggregate_reports'
+  | 'view_raw_document';
 
 const MATRIX: Record<VolunteerRole, ReadonlySet<Capability>> = {
   data_entry: new Set(['upload_documents', 'review_extractions', 'apply_corrections', 'view_row_level_transactions']),
-  reviewer: new Set(['review_extractions', 'apply_corrections', 'approve_templates', 'view_row_level_transactions']),
-  treasurer: new Set(['review_extractions', 'approve_templates', 'view_row_level_transactions', 'view_aggregate_reports']),
+  reviewer: new Set(['review_extractions', 'apply_corrections', 'approve_templates', 'view_row_level_transactions', 'view_raw_document']),
+  treasurer: new Set(['review_extractions', 'approve_templates', 'view_row_level_transactions', 'view_aggregate_reports', 'view_raw_document']),
   leadership: new Set(['view_aggregate_reports']),
 };
 

@@ -16,11 +16,18 @@ matrix reads the same way in the UI and on the server:
 | `approve_templates` | | ✅ | ✅ | |
 | `view_row_level_transactions` | ✅ | ✅ | ✅ | |
 | `view_aggregate_reports` | | | ✅ | ✅ |
+| `view_raw_document` | | ✅ | ✅ | |
 
 `leadership` never receives `view_row_level_transactions` — per AGENTS.md
 §5.3 it is restricted to aggregate views (D2) "unless explicitly elevated
 and logged," and no elevation path exists yet, so today the answer is
 simply: never.
+
+`view_raw_document` (A4: access-controlled raw document retrieval) is
+`reviewer`/`treasurer` only, straight from the A4 issue spec — `data_entry`
+is not granted it even for documents it uploaded itself (no owner-scoped
+carve-out, unlike `upload_documents`/`apply_corrections`) and `leadership`
+is explicitly excluded, same as the row-level-transactions case above.
 
 This matrix mirrors [`services/web/src/lib/rbac.ts`](../services/web/src/lib/rbac.ts),
 the front-end's UI-only copy. That file says outright that the real
