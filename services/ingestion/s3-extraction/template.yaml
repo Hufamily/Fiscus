@@ -1,0 +1,124 @@
+# Private S3 to Lambda to Bedrock receipt extraction pipeline.
+#
+# Ported from the Python/SAM template on origin/track/a/a2-ingestion-rebase-fix
+# (never merged, no open PR) — same resources, Runtime/Handler/BuildMethod
+# swapped for Node. `sam build` with esbuild bundles src/handler.ts plus its
+# relative imports into ../../../../lib/*.ts (esbuild follows the import
+# graph, not the CodeUri boundary, so this works despite lib/ living outside
+# this directory). Final deploy verification is D4's job (AWS deployment,
+# demo assembly) — this defines the stack, it hasn't been `sam deploy`'d.
+
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Private S3 to Lambda to Bedrock receipt extraction pipeline.
+
+Parameters:
+  BedrockModelId:
+    Type: String
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+  RetentionDays:
+    Type: Number
+    Default: 2555
+
+Resources:
+  IngestionBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: RetainRawDocuments
+            Status: Enabled
+            ExpirationInDays: !Ref RetentionDays
+
+  ExtractionFailureQueue:
+    Type: AWS::SQS::Queue
+
+  ExtractionFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: false
+        Target: node20
+        EntryPoints:
+          - src/handler.ts
+    Properties:
+      CodeUri: .
+      Handler: handler.handler
+      Runtime: nodejs20.x
+      Timeout: 30
+      MemorySize: 1024
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          COCKROACH_DATABASE_URL: !Ref DatabaseUrl
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt ExtractionFailureQueue.Arn
+      Events:
+        ReceiptUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref IngestionBucket
+            Events: s3:ObjectCreated:*
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref IngestionBucket
+        - Statement:
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource: "*"
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource: !GetAtt ExtractionFailureQueue.Arn
+
+  ExtractionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-extraction-errors"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ExtractionFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+  FailureQueueAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-extraction-dlq"
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt ExtractionFailureQueue.QueueName
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+Outputs:
+  IngestionBucketName:
+    Value: !Ref IngestionBucket
+  ExtractionFunctionName:
+    Value: !Ref ExtractionFunction
+  ExtractionFailureQueueUrl:
+    Value: !Ref ExtractionFailureQueue
