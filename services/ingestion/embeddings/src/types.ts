@@ -43,3 +43,21 @@ export interface SearchResult {
   txn_date: string;
   distance: number;
 }
+
+// ── templates (owned by Track B — form_type/schema/embedding, see AGENTS.md §4) ─
+export interface TemplateRow {
+  id: string;
+  org_id: string;
+  form_type: string;
+  schema_json: unknown;
+  embedding: number[];
+  status: string;
+  created_at: string;
+}
+
+export interface TemplateSearchResult {
+  id: string;
+  form_type: string;
+  status: string;
+  distance: number;
+}

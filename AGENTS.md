@@ -42,7 +42,7 @@ Raw doc ──► S3 ──► Lambda ──────┘      ├─ vector i
 
 **This section is generated/verified against the live shared CockroachDB
 Cloud dev cluster, not aspirational.** Last verified 2026-08-18 against
-migrations `001`-`005` (see `db/migrations/`); full `SHOW CREATE TABLE` /
+migrations `001`-`006` (see `db/migrations/`); full `SHOW CREATE TABLE` /
 `SHOW INDEXES` dump lives in [`docs/schema.md`](docs/schema.md). If you
 change the schema, **you must update both this section and
 `docs/schema.md` in the same PR** — see the enforcement rule in §6, CI
@@ -85,7 +85,11 @@ Core tables, as actually created by `db/migrations/001`-`004`:
   flag as `documents.status` applies here (`CHECK` added by B1's 002,
   predates A1). `VECTOR INDEX transactions_org_embedding_idx (org_id,
   embedding vector_l2_ops)` is live (added in A1/004), plus a plain
-  `(org_id, created_at DESC)` index from B1.
+  `(org_id, created_at DESC)` index from B1. `status` gained a fourth
+  value, `review_flagged`, in B3/006: a transaction whose nearest
+  embedding neighbors (via `services/ingestion/embeddings/src/anomaly.ts`,
+  `ORDER BY embedding <-> $1`) are all below a similarity threshold is
+  flagged here instead of sitting in `pending_review` unremarked.
 - `corrections(id UUID PK, org_id FK, transaction_id FK, field,
   original_value, corrected_value, corrected_by UUID NOT NULL FK ->
   volunteers, created_at)` — this is the "learned memory" table; the
