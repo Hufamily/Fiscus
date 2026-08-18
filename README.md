@@ -7,7 +7,7 @@ Built for the **CockroachDB × AWS Hackathon — "Build with Agentic Memory"** (
 ## Links
 
 - **Live demo:** https://fiscus-blue.vercel.app
-- **Demo video (<3 min):** _[YouTube link — added at submission]_
+- **Demo video (<3 min):** https://youtu.be/4vXefowUusE
 - **Team:** Ethan Hu, Eric Lin, Aaron Liu, Bryan Wei
 
 ## Why memory is the product
