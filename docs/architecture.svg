@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#57534e"/>
+    </marker>
+    <marker id="arrowg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3f6212"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="560" fill="#faf7f2"/>
+  <text x="40" y="52" font-size="26" font-weight="600" fill="#1c1917">Fiscus — a ledger with a memory</text>
+  <text x="40" y="76" font-size="13" fill="#78716c" font-family="Inter, system-ui, sans-serif">CockroachDB is the agent's persistent memory · AWS runs the agent's hands and brain</text>
+
+  <!-- People / Frontend -->
+  <rect x="40" y="110" width="200" height="86" rx="10" fill="#fffdf9" stroke="#e7e0d8" stroke-width="1.5"/>
+  <text x="140" y="142" font-size="15" font-weight="600" fill="#1c1917" text-anchor="middle">Volunteers &amp; Leadership</text>
+  <text x="140" y="162" font-size="12" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">React front-end · Vercel</text>
+  <text x="140" y="180" font-size="11" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">upload · review · correct · ask</text>
+
+  <!-- API layer -->
+  <rect x="40" y="250" width="200" height="70" rx="10" fill="#fffdf9" stroke="#e7e0d8" stroke-width="1.5"/>
+  <text x="140" y="280" font-size="15" font-weight="600" fill="#1c1917" text-anchor="middle">services/api</text>
+  <text x="140" y="300" font-size="11" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">RBAC at the query layer (D1)</text>
+
+  <!-- AWS column -->
+  <rect x="320" y="110" width="250" height="300" rx="12" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="445" y="136" font-size="13" font-weight="600" fill="#9a3412" text-anchor="middle" font-family="Inter, system-ui, sans-serif">AWS</text>
+
+  <rect x="340" y="150" width="210" height="56" rx="8" fill="#fffdf9" stroke="#e7e0d8"/>
+  <text x="445" y="172" font-size="13" font-weight="600" fill="#1c1917" text-anchor="middle">Amazon S3</text>
+  <text x="445" y="190" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">raw documents only · DB stores pointers</text>
+
+  <rect x="340" y="222" width="210" height="70" rx="8" fill="#fffdf9" stroke="#e7e0d8"/>
+  <text x="445" y="244" font-size="13" font-weight="600" fill="#1c1917" text-anchor="middle">AWS Lambda</text>
+  <text x="445" y="261" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">redact (PII/PCI, Luhn) → extract → embed</text>
+  <text x="445" y="277" font-size="10.5" fill="#a16207" text-anchor="middle" font-family="Inter, system-ui, sans-serif">nothing unredacted leaves this box</text>
+
+  <rect x="340" y="308" width="210" height="84" rx="8" fill="#fffdf9" stroke="#e7e0d8"/>
+  <text x="445" y="330" font-size="13" font-weight="600" fill="#1c1917" text-anchor="middle">Amazon Bedrock</text>
+  <text x="445" y="348" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">Claude 3.5 Haiku — extraction, templates,</text>
+  <text x="445" y="362" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">Q&amp;A agent, executive summaries</text>
+  <text x="445" y="380" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">Titan Embed v2 — 1536-dim embeddings</text>
+
+  <!-- CockroachDB memory column -->
+  <rect x="650" y="110" width="270" height="360" rx="12" fill="#f1f5e9" stroke="#3f6212" stroke-width="2"/>
+  <text x="785" y="138" font-size="14" font-weight="600" fill="#365314" text-anchor="middle" font-family="Inter, system-ui, sans-serif">CockroachDB — the agent's memory</text>
+
+  <rect x="670" y="154" width="230" height="60" rx="8" fill="#fffdf9" stroke="#e7e0d8"/>
+  <text x="785" y="176" font-size="12.5" font-weight="600" fill="#1c1917" text-anchor="middle">Structured memory</text>
+  <text x="785" y="194" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">documents · transactions · templates · sessions</text>
+
+  <rect x="670" y="226" width="230" height="60" rx="8" fill="#fffdf9" stroke="#a16207" stroke-width="1.5"/>
+  <text x="785" y="248" font-size="12.5" font-weight="600" fill="#a16207" text-anchor="middle">Learned corrections</text>
+  <text x="785" y="266" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">human fixes → rules the agent re-applies</text>
+
+  <rect x="670" y="298" width="230" height="60" rx="8" fill="#fffdf9" stroke="#e7e0d8"/>
+  <text x="785" y="320" font-size="12.5" font-weight="600" fill="#1c1917" text-anchor="middle">Distributed vector index</text>
+  <text x="785" y="338" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">VECTOR(1536) · semantic search &amp; matching</text>
+
+  <rect x="670" y="370" width="230" height="60" rx="8" fill="#fffdf9" stroke="#e7e0d8"/>
+  <text x="785" y="392" font-size="12.5" font-weight="600" fill="#1c1917" text-anchor="middle">Append-only audit log</text>
+  <text x="785" y="410" font-size="10.5" fill="#78716c" text-anchor="middle" font-family="Inter, system-ui, sans-serif">every human and agent action · denials too</text>
+
+  <text x="785" y="452" font-size="10.5" fill="#365314" text-anchor="middle" font-family="Inter, system-ui, sans-serif">read by the agent via the Managed MCP Server</text>
+  <text x="785" y="466" font-size="10.5" fill="#365314" text-anchor="middle" font-family="Inter, system-ui, sans-serif">(read-only — writes go through the audited path)</text>
+
+  <!-- Flows -->
+  <line x1="140" y1="196" x2="140" y2="250" stroke="#57534e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="240" y1="155" x2="340" y2="176" stroke="#57534e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="272" y="152" font-size="10" fill="#78716c" font-family="Inter, system-ui, sans-serif">upload</text>
+  <line x1="445" y1="206" x2="445" y2="222" stroke="#57534e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="445" y1="292" x2="445" y2="308" stroke="#57534e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="550" y1="350" x2="650" y2="330" stroke="#3f6212" stroke-width="2" marker-end="url(#arrowg)"/>
+  <text x="586" y="326" font-size="10" fill="#3f6212" font-family="Inter, system-ui, sans-serif">writes memory</text>
+  <line x1="650" y1="256" x2="550" y2="256" stroke="#a16207" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="560" y="244" font-size="10" fill="#a16207" font-family="Inter, system-ui, sans-serif">memory guides extraction</text>
+  <line x1="240" y1="285" x2="650" y2="440" stroke="#57534e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="330" y="330" font-size="10" fill="#78716c" font-family="Inter, system-ui, sans-serif">aggregate-only for leadership</text>
+
+  <!-- footer -->
+  <text x="40" y="530" font-size="11" fill="#78716c" font-family="Inter, system-ui, sans-serif">The loop that matters: a human corrects once → the correction becomes memory → the agent applies it forever after. Knowledge compounds in the database, not in one volunteer's head.</text>
+</svg>
