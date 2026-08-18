@@ -6,10 +6,10 @@ data and security contract is [`AGENTS.md`](../../AGENTS.md).
 
 **D1 (RBAC enforcement):** the access-control logic itself lives in
 [`lib/rbac.ts`](../../lib/rbac.ts) (`enforceAccess` / `requireCapability`),
-not here — there's no HTTP framework/router in this service yet for it to
-attach to. See [`docs/security.md`](../../docs/security.md) for the model.
-Whoever builds the first real endpoint here should wire `requireCapability`
-into it rather than hand-rolling a new access check.
+not here. See [`docs/security.md`](../../docs/security.md) for the model.
+`src/` (below, issue #26) is the first real HTTP router and wires
+`requireCapability` into it per-route rather than hand-rolling a new access
+check.
 
 ## HTTP server (issue #26)
 
