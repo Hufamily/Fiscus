@@ -8,5 +8,14 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["lib/**/*.ts", "db/**/*.ts"]
+  "include": [
+    "lib/**/*.ts",
+    "db/**/*.ts",
+    "test/**/*.ts",
+    "services/agent/**/*.ts",
+    "services/ingestion/embeddings/**/*.ts",
+    "services/ingestion/s3-extraction/**/*.ts",
+    "services/api/src/**/*.ts",
+    "services/api/summaries/**/*.ts"
+  ]
 }

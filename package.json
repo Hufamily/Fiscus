@@ -19,10 +19,14 @@
     "agent:ask": "tsx services/agent/src/cli.ts ask",
     "summary:generate": "tsx services/api/summaries/src/cli.ts generate",
     "extract:file": "tsx services/ingestion/s3-extraction/src/cli.ts extract",
-    "upload:create": "tsx services/ingestion/s3-extraction/src/cli.ts create-upload"
+    "upload:create": "tsx services/ingestion/s3-extraction/src/cli.ts create-upload",
+    "api:dev": "tsx services/api/src/index.ts"
   },
   "devDependencies": {
     "@types/pg": "^8.23.0",
+    "@types/express": "^4.17.21",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
     "tsx": "^4.23.12",
     "typescript": "5.7.3",
     "vite": "^8.2.1",
@@ -32,6 +36,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.1111.0",
     "@aws-sdk/client-s3": "^3.1111.0",
     "@aws-sdk/s3-request-presigner": "^3.1111.0",
+    "express": "^4.21.2",
     "pg": "^8.23.0",
     "zod": "^4.4.3"
   }

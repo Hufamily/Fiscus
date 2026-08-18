@@ -1,0 +1,103 @@
+{
+  "organizations": [
+    { "id": "00000000-0000-0000-0000-000000000001", "name": "Green Paws Rescue", "retention_years": 7, "created_at": "2021-03-01T00:00:00Z" }
+  ],
+  "volunteers": [
+    { "id": "vol_amy", "org_id": "00000000-0000-0000-0000-000000000001", "role": "data_entry", "display_name": "Amy Chen" },
+    { "id": "vol_raj", "org_id": "00000000-0000-0000-0000-000000000001", "role": "reviewer", "display_name": "Raj Patel" },
+    { "id": "vol_dana", "org_id": "00000000-0000-0000-0000-000000000001", "role": "treasurer", "display_name": "Dana Okoro" },
+    { "id": "vol_pat", "org_id": "00000000-0000-0000-0000-000000000001", "role": "leadership", "display_name": "Pat Rivera" }
+  ],
+  "documents": [
+    {
+      "id": "doc_vet1", "org_id": "00000000-0000-0000-0000-000000000001",
+      "s3_key": "s3://fiscus-demo/greenpaws/2024/07/vet-invoice-1.pdf",
+      "doc_type": "vet_invoice", "status": "needs_review", "uploaded_by": "vol_amy",
+      "created_at": "2024-08-22T14:03:00Z"
+    },
+    {
+      "id": "doc_supply1", "org_id": "00000000-0000-0000-0000-000000000001",
+      "s3_key": "s3://fiscus-demo/greenpaws/2024/06/office-supplies-1.pdf",
+      "doc_type": "supply_receipt", "status": "approved", "uploaded_by": "vol_amy",
+      "created_at": "2024-06-10T09:15:00Z"
+    },
+    {
+      "id": "doc_donation1", "org_id": "00000000-0000-0000-0000-000000000001",
+      "s3_key": "s3://fiscus-demo/greenpaws/2024/06/donation-receipt-1.pdf",
+      "doc_type": "donation_receipt", "status": "approved", "uploaded_by": "vol_raj",
+      "created_at": "2024-06-01T11:30:00Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "txn_vet1", "org_id": "00000000-0000-0000-0000-000000000001", "document_id": "doc_vet1",
+      "category": "veterinary", "amount_cents": 32408, "currency": "USD", "txn_date": "2024-08-22",
+      "extracted_fields": [
+        { "key": "invoice_number", "label": "Invoice Number", "value": "INV-240822", "confidence": 0.94 },
+        { "key": "vendor", "label": "Vendor", "value": "Paws & Claws Veterinary Clinic", "confidence": 0.88 },
+        { "key": "patient", "label": "Patient", "value": "Biscuit", "confidence": 0.97 }
+      ],
+      "status": "pending_review", "created_at": "2024-08-22T14:05:00Z"
+    },
+    {
+      "id": "txn_vet0", "org_id": "00000000-0000-0000-0000-000000000001", "document_id": "doc_vet0_paid",
+      "category": "veterinary", "amount_cents": 24469, "currency": "USD", "txn_date": "2024-07-15",
+      "extracted_fields": [
+        { "key": "invoice_number", "label": "Invoice Number", "value": "INV-240715", "confidence": 0.96 },
+        { "key": "vendor", "label": "Vendor", "value": "Paws & Claws Veterinary Clinic", "confidence": 0.93 }
+      ],
+      "status": "approved", "created_at": "2024-07-15T10:00:00Z"
+    },
+    {
+      "id": "txn_supply1", "org_id": "00000000-0000-0000-0000-000000000001", "document_id": "doc_supply1",
+      "category": "office_supplies", "amount_cents": 8750, "currency": "USD", "txn_date": "2024-06-10",
+      "extracted_fields": [
+        { "key": "receipt_number", "label": "Receipt Number", "value": "RCP-240610", "confidence": 0.91 },
+        { "key": "vendor", "label": "Vendor", "value": "Office Depot", "confidence": 0.95 }
+      ],
+      "status": "approved", "created_at": "2024-06-10T09:20:00Z"
+    },
+    {
+      "id": "txn_donation1", "org_id": "00000000-0000-0000-0000-000000000001", "document_id": "doc_donation1",
+      "category": "donations", "amount_cents": 50000, "currency": "USD", "txn_date": "2024-06-01",
+      "extracted_fields": [
+        { "key": "receipt_number", "label": "Receipt Number", "value": "DON-240601", "confidence": 0.9 },
+        { "key": "donor", "label": "Donor", "value": "Springfield Area United Nonprofits", "confidence": 0.85 }
+      ],
+      "status": "approved", "created_at": "2024-06-01T11:35:00Z"
+    }
+  ],
+  "corrections": [
+    {
+      "id": "cor_1", "org_id": "00000000-0000-0000-0000-000000000001", "transaction_id": "txn_vet0",
+      "field": "vendor", "original_value": "Paws Claws Vet Clinic", "corrected_value": "Paws & Claws Veterinary Clinic",
+      "corrected_by": "vol_raj", "created_at": "2024-07-15T10:10:00Z"
+    }
+  ],
+  "templates": [
+    {
+      "id": "tpl_vet_invoice", "org_id": "00000000-0000-0000-0000-000000000001", "form_type": "vet_invoice",
+      "status": "approved",
+      "fields": [
+        { "key": "invoice_number", "label": "Invoice Number", "type": "string", "sample": "INV-240715" },
+        { "key": "invoice_date", "label": "Invoice Date", "type": "date", "sample": "07/15/2024" },
+        { "key": "total_amount", "label": "Total Amount", "type": "amount", "sample": "$244.69" },
+        { "key": "vendor_name", "label": "Vendor Name", "type": "string", "sample": "Paws & Claws Veterinary Clinic" }
+      ],
+      "example_doc_id": "doc_vet0_paid", "created_at": "2024-07-01T00:00:00Z"
+    },
+    {
+      "id": "tpl_supply_receipt", "org_id": "00000000-0000-0000-0000-000000000001", "form_type": "supply_receipt",
+      "status": "pending_review",
+      "fields": [
+        { "key": "receipt_number", "label": "Receipt Number", "type": "string", "sample": "RCP-240610" },
+        { "key": "vendor_name", "label": "Vendor Name", "type": "string", "sample": "Office Depot" },
+        { "key": "total_amount", "label": "Total Amount", "type": "amount", "sample": "$87.50" }
+      ],
+      "example_doc_id": "doc_supply1", "created_at": "2024-06-10T09:25:00Z"
+    }
+  ],
+  "audit_log": [],
+  "sessions": [],
+  "summaries": []
+}

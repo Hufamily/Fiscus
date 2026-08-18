@@ -37,14 +37,21 @@
 import type { FiscusApi } from "./client";
 import { mockApi } from "./mock";
 import { setFallbackActive } from "./fallbackState";
+import { currentVolunteerId } from "./actorState";
 import type {
   FiscusDocument, Transaction, Template, Correction, LeadershipSummary,
   Organization, Volunteer, ActivityEvent, LearnedCorrection, AgentMessage,
   SearchResult, ReviewSession,
 } from "../types";
 
+// Carries the demo actor identity (see actorState.ts) so services/api's
+// requireCapability() middleware has someone to check the request against.
+function authHeaders(extra?: Record<string, string>): Record<string, string> {
+  return { "x-fiscus-volunteer-id": currentVolunteerId(), ...extra };
+}
+
 async function get<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: authHeaders() });
   if (!res.ok) throw new Error(`GET ${url} → ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -52,7 +59,7 @@ async function get<T>(url: string): Promise<T> {
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`POST ${url} → ${res.status}`);
@@ -60,7 +67,7 @@ async function post<T>(url: string, body: unknown): Promise<T> {
 }
 
 async function maybeNull<T>(url: string): Promise<T | null> {
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: authHeaders() });
   if (res.status === 204) return null;
   if (!res.ok) throw new Error(`GET ${url} → ${res.status}`);
   return res.json() as Promise<T>;

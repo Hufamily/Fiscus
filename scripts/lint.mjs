@@ -3,6 +3,11 @@ import { join } from "node:path";
 
 const roots = ["lib", "services"];
 const sourceExtensions = new Set([".ts", ".mts", ".cts", ".js", ".mjs", ".cjs"]);
+// node_modules/dist/build dirs get vendored or generated once any services/*
+// package runs its own `npm install` (e.g. services/web, services/api) —
+// without this exclusion the walk scans thousands of vendored files and
+// blows past CI's timeout (see CLAUDE.md's CI-widening-session learning).
+const skipDirs = new Set(["node_modules", "dist", "build", ".git"]);
 const failures = [];
 
 async function visit(directory) {
@@ -15,6 +20,7 @@ async function visit(directory) {
   }
 
   for (const entry of entries) {
+    if (entry.isDirectory() && skipDirs.has(entry.name)) continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
       await visit(path);

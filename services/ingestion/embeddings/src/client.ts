@@ -79,7 +79,7 @@ export async function invokeModel(systemPrompt: string, userPrompt: string): Pro
     inferenceConfig: { maxTokens: 1024, temperature: 0 },
   }));
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  if (!block || !('text' in block) || !block.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;
@@ -180,6 +180,7 @@ export async function searchTransactions(queryEmbedding: number[], limit = 5): P
     // Real mode uses cosine distance (<->). Documented in README.
     return db.transactions.slice(0, limit).map((t, i) => ({
       id: t.id,
+      document_id: t.document_id,
       category: t.category,
       amount_cents: t.amount_cents,
       txn_date: t.txn_date,
@@ -187,7 +188,7 @@ export async function searchTransactions(queryEmbedding: number[], limit = 5): P
     }));
   }
   const result = await getPool().query<SearchResult>(
-    `SELECT id, category, amount_cents, txn_date,
+    `SELECT id, document_id, category, amount_cents, txn_date,
             embedding <-> $1 AS distance
      FROM transactions
      WHERE org_id = $2
@@ -195,5 +196,11 @@ export async function searchTransactions(queryEmbedding: number[], limit = 5): P
      LIMIT $3`,
     [JSON.stringify(queryEmbedding), ORG_ID, limit],
   );
-  return result.rows;
+  // CockroachDB's INT is 64-bit, so node-postgres returns amount_cents as a
+  // string despite the column being a plain INT — confirmed live against
+  // the real cluster (services/api/src's own db.ts hit the same issue on
+  // every integer column it reads; see its getOrg()/getCategoryTotals()
+  // comments). Coerce so callers get a real number, matching this file's
+  // own SearchResult['amount_cents'] type.
+  return result.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
 }

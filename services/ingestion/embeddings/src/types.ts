@@ -38,6 +38,7 @@ export interface TransactionRow {
 
 export interface SearchResult {
   id: string;
+  document_id: string;
   category: string;
   amount_cents: number;
   txn_date: string;
