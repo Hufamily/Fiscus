@@ -5,13 +5,20 @@ Generates 120-180 word executive summaries for leadership. Queries aggregate-onl
 ## Commands
 
 ```
-npm run summary:generate -- --period <label>
+npm run summary:generate -- --period <label> --role <role> [--volunteer-id <id>]
 ```
+
+`--role` is required and enforced server-side via `lib/rbac.ts` (D1) —
+only `treasurer` and `leadership` hold the `view_aggregate_reports`
+capability; any other role is rejected and the denial is audit-logged.
+This stands in for the auth context a real HTTP endpoint would populate
+from the caller's session once `services/api` has one.
 
 **Example:**
 ```
-npm run summary:generate -- --period YTD
-npm run summary:generate -- --period Q3-2024
+npm run summary:generate -- --period YTD --role treasurer
+npm run summary:generate -- --period Q3-2024 --role leadership
+npm run summary:generate -- --period YTD --role data_entry   # rejected, audit-logged
 ```
 
 ## Environment variables
@@ -30,11 +37,13 @@ If either `DATABASE_URL` or `AWS_ACCESS_KEY_ID` is absent, the module auto-switc
 - A deterministic 120-180 word mock summary referencing seeded category totals is returned
 - Summary and audit rows stored in `fixtures/mock-db.json`
 
-Apply `db/migrations/001_b2_minimal.sql`, `002_b1_docs_transactions.sql`, `004_d2_summaries.sql` before running in real mode.
+Apply `db/migrations/001_b2_minimal.sql` through `005_d2_summaries.sql` in order before running in real mode (in particular `004_a1_volunteers_corrections_indexes.sql`, since `summaries.org_id` and the RBAC role check both assume `organizations`/`volunteers` already exist).
 
 ## RBAC enforcement
 
-The aggregate query uses `GROUP BY category, status` only — no individual transaction rows, vendor names, or person names cross the query boundary. This is enforced in code; DB-level RBAC is D1's responsibility.
+Two layers, per the D1 spec:
+- **Query shape:** the aggregate query uses `GROUP BY category, status` only — no individual transaction rows, vendor names, or person names cross the query boundary.
+- **Access check:** `generateSummary()` calls `enforceAccess()` from `lib/rbac.ts` (D1) before doing anything else — only `treasurer`/`leadership` (the `view_aggregate_reports` capability) may generate a summary. A denied attempt writes an `access_denied` row to `audit_log` and throws, rather than silently no-op'ing.
 
 ## Spec note
 

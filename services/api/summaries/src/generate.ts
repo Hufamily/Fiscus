@@ -1,11 +1,10 @@
-// generateSummary(): aggregate -> redact -> Claude -> store -> audit.
+// generateSummary(): enforce RBAC -> aggregate -> redact -> Claude -> store -> audit.
 
 import { redact } from '../../../../lib/redact';
 import { logAction } from '../../../../lib/audit';
+import { enforceAccess, type AccessSubject } from '../../../../lib/rbac';
 import {
   IS_MOCK,
-  ORG_ID,
-  ACTOR_ID,
   invokeModel,
   getAggregates,
   insertSummary,
@@ -36,7 +35,15 @@ A notable trend is that veterinary costs account for approximately 87 percent of
 
 Overall, approved expenditures total $332.19 and pending expenditures total $324.08. Leadership is encouraged to complete the outstanding review to maintain an accurate picture of committed funds for the current period.`;
 
-export async function generateSummary(periodLabel: string): Promise<SummaryRow> {
+export async function generateSummary(periodLabel: string, subject: AccessSubject): Promise<SummaryRow> {
+  // 0. D1 enforcement — only treasurer/leadership hold view_aggregate_reports;
+  // a denied attempt is audit-logged by enforceAccess before it throws.
+  await enforceAccess(subject, {
+    capability: 'view_aggregate_reports',
+    targetTable: 'summaries',
+    targetId: periodLabel,
+  });
+
   // 1. Aggregate-only query (no row-level data — RBAC constraint per AGENTS.md §5)
   const aggregates = await getAggregates();
   const aggregatesText = buildAggregatesText(aggregates);
@@ -58,7 +65,7 @@ export async function generateSummary(periodLabel: string): Promise<SummaryRow> 
   const summary = await insertSummary(periodLabel, body);
 
   // 4. Audit
-  await logAction(ORG_ID, ACTOR_ID, 'summary_generated', 'summaries', summary.id, { period_label: periodLabel });
+  await logAction(subject.orgId, subject.volunteerId, 'summary_generated', 'summaries', summary.id, { period_label: periodLabel });
 
   return summary;
 }
