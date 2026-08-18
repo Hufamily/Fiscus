@@ -35,7 +35,22 @@ Runs fully on an in-memory mock of the API contract — see `services/web/README
 
 ### Backend
 
-_[Setup instructions for the API / ingestion services — completed by the backend track at submission: env vars (`DATABASE_URL`, AWS credentials), migration command, run command.]_
+```bash
+npm install                # root deps: pg, tsx, aws-sdk, etc.
+cp .env.example .env       # fill in COCKROACH_DATABASE_URL (+ AWS_REGION for live Bedrock)
+npm run db:migrate         # applies db/migrations/*.sql in order, tracked in schema_migrations
+npm run db:seed            # deterministic fixture data (3 orgs, volunteers, templates, transactions, corrections)
+```
+
+Verify: `SHOW CREATE TABLE templates;` / `SHOW CREATE TABLE transactions;`
+should print `VECTOR INDEX ... (org_id, embedding vector_l2_ops)` explicitly
+in the reconstructed DDL. Full schema + migration tool rationale:
+[docs/schema.md](docs/schema.md).
+
+Without `COCKROACH_DATABASE_URL` set, individual services fall back to
+their own local mock-db.json fixtures (see each `services/*/README.md`) —
+`db:migrate` / `db:seed` specifically need a real cluster since they write
+to the shared dev database, not a mock.
 
 ### Template generation (issue B2)
 
