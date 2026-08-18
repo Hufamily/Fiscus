@@ -1,10 +1,9 @@
 # Ingestion service (Track A)
 
-S3 upload handling + Lambda extraction pipeline. See issues A2, A3, A4 in
-[`ISSUES.md`](../../ISSUES.md) and the data model in
+S3 upload handling + Lambda extraction pipeline (A2), embeddings (B1), and
+template generation (B2). See the data model in
 [`AGENTS.md` §4](../../AGENTS.md).
 
-## Setup
-
-_TODO: fill in once A2 lands (install steps, how to run the Lambda locally,
-how to trigger a test upload)._
+- **A2 (S3 upload + Lambda extraction):** [`s3-extraction/`](./s3-extraction/README.md).
+- **B1 (embeddings):** [`embeddings/`](./embeddings).
+- **B2 (template generation):** [`template-gen/`](./template-gen).
