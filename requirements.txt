@@ -1,1 +1,1 @@
--r services/ingestion/requirements.txt
+-r services/ingestion-A2/requirements.txt

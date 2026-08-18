@@ -8,6 +8,12 @@ import psycopg
 
 from .key import DocumentIdentity
 
+# audit_log.actor_id is NOT NULL (see AGENTS.md §4); these two write paths
+# run from the S3-triggered Lambda with no human volunteer in context, so
+# they log under a fixed system-actor label, same convention documents.
+# uploaded_by uses for non-human writers.
+SYSTEM_ACTOR = "s3-lambda-bedrock"
+
 
 class ExtractionRepository:
     def __init__(self, connection_string: str) -> None:
@@ -28,24 +34,26 @@ class ExtractionRepository:
             row = cursor.fetchone()
             if not row:
                 raise ValueError("Document was not registered before extraction")
-            if row[0] == "extracted":
+            cursor.execute("SELECT 1 FROM transactions WHERE document_id = %s AND org_id = %s", (identity.document_id, identity.org_id))
+            if cursor.fetchone():
                 return "duplicate"
             transaction_id = str(uuid.uuid4())
             cursor.execute(
                 """INSERT INTO transactions (id, org_id, document_id, category, amount_cents, currency, txn_date, extracted_fields_json, status)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'extracted') ON CONFLICT (document_id) DO NOTHING""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending_review')""",
                 (transaction_id, identity.org_id, identity.document_id, extraction.get("category", "uncategorized"), extraction["amountCents"], extraction["currency"], extraction["transactionDate"], json.dumps({"vendor": extraction["vendor"], "lineItems": extraction["lineItems"]}),),
             )
-            cursor.execute("SELECT id FROM transactions WHERE document_id = %s AND org_id = %s", (identity.document_id, identity.org_id))
-            stored_transaction_id = cursor.fetchone()[0]
-            cursor.execute("UPDATE documents SET status = 'extracted' WHERE id = %s AND org_id = %s", (identity.document_id, identity.org_id))
-            self._log(cursor, identity.org_id, None, "extraction_saved", "transactions", stored_transaction_id, {"documentId": identity.document_id, "source": "s3-lambda-bedrock"})
+            cursor.execute("UPDATE documents SET status = 'needs_review' WHERE id = %s AND org_id = %s", (identity.document_id, identity.org_id))
+            self._log(cursor, identity.org_id, SYSTEM_ACTOR, "extraction_saved", "transactions", transaction_id, {"documentId": identity.document_id, "source": SYSTEM_ACTOR})
             return "saved"
 
     def mark_needs_review(self, identity: DocumentIdentity, reason: str) -> None:
         with psycopg.connect(self.connection_string) as connection, connection.cursor() as cursor:
-            cursor.execute("UPDATE documents SET status = 'needs_review' WHERE id = %s AND org_id = %s AND status <> 'extracted'", (identity.document_id, identity.org_id))
-            self._log(cursor, identity.org_id, None, "extraction_failed", "documents", identity.document_id, {"reason": reason, "source": "s3-lambda-bedrock"})
+            cursor.execute("SELECT 1 FROM transactions WHERE document_id = %s AND org_id = %s", (identity.document_id, identity.org_id))
+            if cursor.fetchone():
+                return
+            cursor.execute("UPDATE documents SET status = 'needs_review' WHERE id = %s AND org_id = %s", (identity.document_id, identity.org_id))
+            self._log(cursor, identity.org_id, SYSTEM_ACTOR, "extraction_failed", "documents", identity.document_id, {"reason": reason, "source": SYSTEM_ACTOR})
 
     @staticmethod
     def _log(cursor: psycopg.Cursor[Any], org_id: str, actor_id: str | None, action: str, target_table: str, target_id: str, detail: dict[str, Any]) -> None:
