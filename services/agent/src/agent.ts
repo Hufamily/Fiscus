@@ -13,6 +13,7 @@ import {
   getSession,
   upsertSession,
 } from './client';
+import { findMentionedTable, describeTable, IS_MCP_MOCK } from './mcp-schema';
 import type { AgentResponse, Citation, AggregateRow, TransactionSummary, ConversationTurn } from './types';
 
 const SYSTEM_PROMPT = `You are a financial assistant for a volunteer nonprofit organization.
@@ -79,6 +80,18 @@ function mockAnswer(
   return { answer: "I don't have that information.", citations: [] };
 }
 
+// Matches "what does the transactions table look like", "schema of
+// templates", "structure of the sessions table", "what columns does
+// documents have", etc. Table identity itself is resolved dynamically via
+// findMentionedTable() (mcp-schema.ts), which checks against the live table
+// catalog -- this regex only decides "is this a schema question", it never
+// hardcodes a table name or column list.
+const SCHEMA_QUESTION_RE = /\b(look like|schema|columns|structure|fields)\b/i;
+
+function isSchemaQuestion(question: string): boolean {
+  return SCHEMA_QUESTION_RE.test(question);
+}
+
 function parseClaudeJson(raw: string): { answer: string; citations: Citation[] } {
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error(`Claude response is not JSON: ${raw.slice(0, 200)}`);
@@ -95,6 +108,29 @@ export async function ask(question: string, sessionId?: string): Promise<AgentRe
   if (sessionId) {
     const session = await getSession(sessionId);
     priorTurns = session?.pending_documents?.conversation ?? [];
+  }
+
+  // 1b. Schema questions ("what does the transactions table look like")
+  // are answered via MCP read-only schema introspection instead of the
+  // Bedrock RAG path below -- see mcp-schema.ts. Table identity is resolved
+  // dynamically against the live (or mock) table catalog, not a hardcoded
+  // list, so this works for any table MCP can see.
+  if (isSchemaQuestion(question)) {
+    const table = await findMentionedTable(question);
+    if (table) {
+      const answer = await describeTable(table);
+      const citations: Citation[] = [
+        { category: table, detail: `source: CockroachDB Managed MCP Server, get_table_schema(${table})` },
+      ];
+      const updatedConversation: ConversationTurn[] = [...priorTurns, { question, answer }];
+      const session = await upsertSession(sessionId, { conversation: updatedConversation });
+      await logAction(ORG_ID, VOLUNTEER_ID, 'agent_answered_schema', 'sessions', session.id, {
+        question,
+        table,
+        mcp_mock: IS_MCP_MOCK,
+      });
+      return { answer, citations, session_id: session.id };
+    }
   }
 
   // 2. Retrieve aggregates + vector context

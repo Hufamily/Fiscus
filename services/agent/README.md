@@ -2,6 +2,8 @@
 
 RAG-lite volunteer assistant: retrieves transaction aggregates and vector-similar transactions, then answers questions via Bedrock Claude with citations. Sessions persist conversation history in CockroachDB.
 
+Schema questions ("what does the transactions table look like") are answered separately via read-only CockroachDB Managed MCP Server introspection (`src/mcp-schema.ts`, issue #9/B4) instead of the Bedrock RAG path — see [`docs/tool-usage.md`](../../docs/tool-usage.md) for the full writeup, including how the read-only boundary was confirmed.
+
 See [`AGENTS.md`](../../AGENTS.md) for the full contract and [`ISSUES.md`](../../ISSUES.md) for C1–C4 issue details.
 
 ## Install
@@ -39,6 +41,7 @@ npm run agent:ask -- --question "what's pending review?"
 npm run agent:ask -- --question "total spend this year"
 npm run agent:ask -- --question "how much on vet bills?"
 npm run agent:ask -- --question "what's the CEO's salary?"
+npm run agent:ask -- --question "what does the transactions table look like"
 ```
 
 ## Environment variables
@@ -49,6 +52,10 @@ npm run agent:ask -- --question "what's the CEO's salary?"
 | `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` | Yes | AWS credentials |
 | `AWS_REGION` | No | Defaults to `us-east-1` |
 | `BEDROCK_MODEL_ID` | No | Defaults to `us.anthropic.claude-3-5-haiku-20241022-v1:0` |
+| `COCKROACH_MCP_API_KEY` | No | Enables the real Managed MCP Server client for schema questions. Unset = fixture-backed mock (see `docs/tool-usage.md`). |
+| `COCKROACH_MCP_URL` | No | Defaults to `https://cockroachlabs.cloud/mcp` |
+| `COCKROACH_MCP_CLUSTER_ID` | No | Only needed if the MCP config has no cluster bound to the API key |
+| `COCKROACH_MCP_DATABASE` | No | Defaults to `defaultdb` |
 
 ## Mock vs real mode
 
