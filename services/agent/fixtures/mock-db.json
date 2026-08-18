@@ -87,7 +87,9 @@
         ]
       },
       "current_index": 0,
-      "updated_at": "2026-08-17T19:27:06.687Z"
+      "updated_at": "2026-08-17T19:27:06.687Z",
+      "batch_document_ids": [],
+      "batch_status": "idle"
     },
     {
       "id": "e513e059-ddb7-42b1-87c1-e24fc2a3fb7e",
@@ -102,7 +104,9 @@
         ]
       },
       "current_index": 0,
-      "updated_at": "2026-08-17T19:26:57.516Z"
+      "updated_at": "2026-08-17T19:26:57.516Z",
+      "batch_document_ids": [],
+      "batch_status": "idle"
     },
     {
       "id": "353dd20b-f141-44e3-b639-d889a129df8c",
@@ -117,7 +121,9 @@
         ]
       },
       "current_index": 0,
-      "updated_at": "2026-08-17T19:26:58.417Z"
+      "updated_at": "2026-08-17T19:26:58.417Z",
+      "batch_document_ids": [],
+      "batch_status": "idle"
     },
     {
       "id": "39a59ff2-7255-4d6f-96cd-46c58aa793db",
@@ -132,7 +138,9 @@
         ]
       },
       "current_index": 0,
-      "updated_at": "2026-08-17T19:27:14.877Z"
+      "updated_at": "2026-08-17T19:27:14.877Z",
+      "batch_document_ids": [],
+      "batch_status": "idle"
     }
   ],
   "audit_log": [

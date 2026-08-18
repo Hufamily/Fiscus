@@ -97,12 +97,21 @@ Core tables, as actually created by `db/migrations/001`-`004`:
   `actor_id` is untyped `TEXT`, no FK to `volunteers` — the agent itself
   can be the actor.
 - `sessions(id UUID PK, org_id FK, volunteer_id TEXT, pending_documents
-  JSONB, current_index, updated_at)` — persistent agent task state. Spec
-  says this is owned jointly by Tracks A and C and added through a joint
-  migration; in practice C1 (`003_c1_sessions.sql`) added it solo before
-  A1 ever ran, since nobody had applied migrations to the real cluster
-  yet. Noting what happened, not changing the ownership rule for next
-  time.
+  JSONB, current_index, batch_document_ids JSONB, batch_status TEXT,
+  updated_at)` — persistent agent task state. Spec says this is owned
+  jointly by Tracks A and C and added through a joint migration; in
+  practice C1 (`003_c1_sessions.sql`) added it solo before A1 ever ran,
+  since nobody had applied migrations to the real cluster yet. Noting what
+  happened, not changing the ownership rule for next time. `pending_documents`
+  is C1's RAG Q&A conversation history (`{conversation: [...]}`), despite
+  the name — it is NOT a document queue. C2 (`006_c2_batch_resume.sql`)
+  added `batch_document_ids` (ordered array of document IDs for a
+  volunteer's current review batch) and `batch_status` (`CHECK` IN
+  `'idle'`, `'in_progress'`, `'completed'`) as dedicated columns for
+  batch/task resume rather than further overloading `pending_documents`;
+  `current_index` (present since 003 but previously unused/always 0) is
+  now the real pointer into `batch_document_ids`. See
+  `services/agent/src/batch-session.ts`.
 - `summaries(id UUID PK, org_id FK, period_label TEXT, body TEXT,
   created_at)` — additive table from D2 (`005_d2_summaries.sql`), not part
   of the original §4 contract; stores Bedrock-generated executive

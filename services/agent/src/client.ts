@@ -32,7 +32,10 @@ export async function invokeModel(systemPrompt: string, userPrompt: string): Pro
     inferenceConfig: { maxTokens: 512, temperature: 0 },
   }));
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  // The AWS SDK's ContentBlock union has no `type` discriminant field, so
+  // `block.type !== 'text'` doesn't compile under strict mode -- narrow with
+  // an `in` check instead.
+  if (!block || !('text' in block) || !block.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;
@@ -167,6 +170,10 @@ export async function upsertSession(
       volunteer_id: VOLUNTEER_ID,
       pending_documents: pendingDocuments,
       current_index: 0,
+      // Chat sessions created here have no batch attached; batch state is
+      // exclusively owned by the functions below.
+      batch_document_ids: [],
+      batch_status: 'idle',
       updated_at: new Date().toISOString(),
     };
     db.sessions.push(row);
@@ -183,5 +190,90 @@ export async function upsertSession(
      RETURNING *`,
     [id, ORG_ID, VOLUNTEER_ID, JSON.stringify(pendingDocuments)],
   );
+  return result.rows[0];
+}
+
+// ── Batch-resume session CRUD (C2) ──────────────────────────────────────────
+// Separate from getSession/upsertSession above, which serve C1's Q&A
+// conversation history via `pending_documents`. This reads/writes the
+// dedicated `batch_document_ids` / `batch_status` columns added by
+// 006_c2_batch_resume.sql, plus `current_index` (pre-existing but unused
+// until now). See services/agent/src/batch-session.ts for the state machine
+// built on top of these.
+
+export async function getOpenBatchSession(orgId: string, volunteerId: string): Promise<SessionRow | null> {
+  if (IS_MOCK) {
+    const db = readMockDb();
+    const matches = db.sessions
+      .filter((s) => s.org_id === orgId && s.volunteer_id === volunteerId && s.batch_status === 'in_progress')
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return matches[0] ?? null;
+  }
+  const result = await getPool().query<SessionRow>(
+    `SELECT * FROM sessions
+     WHERE org_id = $1 AND volunteer_id = $2 AND batch_status = 'in_progress'
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [orgId, volunteerId],
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function createBatchSession(
+  orgId: string,
+  volunteerId: string,
+  documentIds: string[],
+): Promise<SessionRow> {
+  const status: SessionRow['batch_status'] = documentIds.length > 0 ? 'in_progress' : 'completed';
+  if (IS_MOCK) {
+    const db = readMockDb();
+    const row: SessionRow = {
+      id: randomUUID(),
+      org_id: orgId,
+      volunteer_id: volunteerId,
+      pending_documents: {},
+      current_index: 0,
+      batch_document_ids: documentIds,
+      batch_status: status,
+      updated_at: new Date().toISOString(),
+    };
+    db.sessions.push(row);
+    writeMockDb(db);
+    return row;
+  }
+  const result = await getPool().query<SessionRow>(
+    `INSERT INTO sessions (id, org_id, volunteer_id, batch_document_ids, current_index, batch_status)
+     VALUES (gen_random_uuid(), $1, $2, $3, 0, $4)
+     RETURNING *`,
+    [orgId, volunteerId, JSON.stringify(documentIds), status],
+  );
+  return result.rows[0];
+}
+
+export async function advanceBatchSession(sessionId: string): Promise<SessionRow> {
+  if (IS_MOCK) {
+    const db = readMockDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`No session found: ${sessionId}`);
+    const nextIndex = session.current_index + 1;
+    session.current_index = nextIndex;
+    session.batch_status = nextIndex >= session.batch_document_ids.length ? 'completed' : 'in_progress';
+    session.updated_at = new Date().toISOString();
+    writeMockDb(db);
+    return session;
+  }
+  const result = await getPool().query<SessionRow>(
+    `UPDATE sessions
+     SET current_index = current_index + 1,
+         batch_status = CASE
+           WHEN current_index + 1 >= jsonb_array_length(batch_document_ids) THEN 'completed'
+           ELSE 'in_progress'
+         END,
+         updated_at = now()
+     WHERE id = $1
+     RETURNING *`,
+    [sessionId],
+  );
+  if (result.rows.length === 0) throw new Error(`No session found: ${sessionId}`);
   return result.rows[0];
 }

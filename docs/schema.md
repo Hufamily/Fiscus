@@ -26,6 +26,7 @@ Migration history:
 | `003_c1_sessions.sql` | A+C (joint) | `sessions` |
 | `004_a1_volunteers_corrections_indexes.sql` | A1 | `volunteers`, `corrections`, vector indexes on `templates.embedding` and `transactions.embedding` |
 | `005_d2_summaries.sql` | D2 | `summaries` (additive, not in the original §4 contract) |
+| `006_c2_batch_resume.sql` | C2 | `sessions.batch_document_ids`, `sessions.batch_status` (additive columns for batch/task resume) |
 
 001-003 were written as minimal stopgaps by other tracks so development
 could start before A1 landed (see the comments in each file). This issue
@@ -204,7 +205,9 @@ write through `lib/audit.ts`'s `logAction`, never insert directly (§6).
 ## sessions
 
 Owned jointly by Tracks A and C; added by `003_c1_sessions.sql` before A1
-landed, not by this issue. Included here for completeness.
+landed, not by this issue. `batch_document_ids` and `batch_status` were
+added by `006_c2_batch_resume.sql` (issue C2, "Session/task-state
+persistence").
 
 ```sql
 CREATE TABLE public.sessions (
@@ -214,11 +217,35 @@ CREATE TABLE public.sessions (
 	pending_documents JSONB NOT NULL DEFAULT '{}':::JSONB,
 	current_index INT8 NOT NULL DEFAULT 0:::INT8,
 	updated_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	batch_document_ids JSONB NOT NULL DEFAULT '[]':::JSONB,
+	batch_status STRING NOT NULL DEFAULT 'idle':::STRING,
 	CONSTRAINT sessions_pkey PRIMARY KEY (id ASC),
 	CONSTRAINT sessions_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.organizations(id),
-	INDEX sessions_org_volunteer_idx (org_id ASC, volunteer_id ASC)
+	INDEX sessions_org_volunteer_idx (org_id ASC, volunteer_id ASC),
+	CONSTRAINT sessions_batch_status_check CHECK (batch_status IN ('idle', 'in_progress', 'completed'))
 );
 ```
+
+**Two disjoint concerns share this one row, via disjoint columns:**
+- `pending_documents` — C1's RAG Q&A conversation history
+  (`{conversation: [{question, answer}, ...]}`). Despite the column name,
+  this is not a document queue; verified by reading
+  `services/agent/src/agent.ts`'s `ask()`, the only reader/writer.
+- `batch_document_ids` + `current_index` + `batch_status` — C2's
+  batch/task-resume state. `batch_document_ids` is the ordered queue of
+  document IDs for a volunteer's current review batch; `current_index`
+  (present since `003` but never actually read/written by any code until
+  C2) points at the document currently being worked on;`batch_status` is
+  `'idle'` (no batch), `'in_progress'`, or `'completed'`. Driven by
+  `services/agent/src/batch-session.ts` via
+  `getOpenBatchSession`/`createBatchSession`/`advanceBatchSession` in
+  `services/agent/src/client.ts`. This is what lets a volunteer resume a
+  batch after a killed/restarted agent process instead of starting over.
+
+A future migration should probably split these into two tables (or at
+minimum rename `pending_documents`) rather than keep growing one
+overloaded row — noted here rather than done now, since a rename touches
+every existing consumer and isn't this issue's job.
 
 ## summaries
 

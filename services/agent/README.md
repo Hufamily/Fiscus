@@ -1,6 +1,8 @@
-# agent — C1: Volunteer Q&A Agent
+# agent — C1: Volunteer Q&A Agent, C2: Session/task-state persistence
 
 RAG-lite volunteer assistant: retrieves transaction aggregates and vector-similar transactions, then answers questions via Bedrock Claude with citations. Sessions persist conversation history in CockroachDB.
+
+Also implements C2: resumable batch/document-review sessions, so killing the agent process mid-batch and restarting resumes at the same document (state lives in CockroachDB, never in memory — see `src/batch-session.ts`).
 
 See [`AGENTS.md`](../../AGENTS.md) for the full contract and [`ISSUES.md`](../../ISSUES.md) for C1–C4 issue details.
 
@@ -32,6 +34,21 @@ npm run agent:ask -- --question "<follow-up>" --session <session_id>
 }
 ```
 
+### Batch/task resume (C2)
+
+```
+# Start a batch: registers an ordered queue of document IDs for a volunteer.
+npm run agent:batch-start -- --documents doc-1 doc-2 doc-3 --org-id <org_id> --volunteer-id <volunteer_id>
+
+# On agent start / volunteer login: check for an open batch instead of starting fresh.
+npm run agent:batch-resume -- --org-id <org_id> --volunteer-id <volunteer_id>
+
+# After finishing the current document, advance the pointer.
+npm run agent:batch-advance -- --session <session_id>
+```
+
+`batch-resume` is the "resume rather than starting fresh" entry point: it reports the session id and which document to work on next, or says there's nothing open. Because state is written to CockroachDB (or `fixtures/mock-db.json` in mock mode) on every `batch-start`/`batch-advance` call and re-read fresh on every `batch-resume` call, this survives a killed and restarted process — nothing is cached in memory across invocations. See `test/batch-resume.test.ts` at the repo root for a test that proves this by forcing a fresh module instance mid-test (`vi.resetModules()`) between "start+advance" and "resume".
+
 ## Examples (bundled fixtures)
 
 ```
@@ -57,7 +74,7 @@ If either `DATABASE_URL` or `AWS_ACCESS_KEY_ID` is absent, the module auto-switc
 - Claude answers are deterministic keyword-matched responses from seeded data
 - Sessions and audit rows stored in `fixtures/mock-db.json`
 
-Apply `db/migrations/001_b2_minimal.sql`, `002_b1_docs_transactions.sql`, `003_c1_sessions.sql` before running in real mode.
+Apply `db/migrations/001_b2_minimal.sql`, `002_b1_docs_transactions.sql`, `003_c1_sessions.sql`, `006_c2_batch_resume.sql` before running in real mode.
 
 ## Seeded fixture data (mock mode)
 
@@ -70,3 +87,5 @@ Apply `db/migrations/001_b2_minimal.sql`, `002_b1_docs_transactions.sql`, `003_c
 ## Spec note
 
 `sessions.pending_documents JSONB` is repurposed to store `{conversation: [{question, answer}]}`. The column name is misleading (designed for Track A document queues); a dedicated Q&A context column would be cleaner. Flagged for Track A/C to decide in a future migration.
+
+C2 verified this repurposing is total (no code path reads `pending_documents` as an actual document queue) and added dedicated `batch_document_ids` / `batch_status` columns for batch-resume state, rather than further overloading `pending_documents`. `current_index` — present on the table since `003_c1_sessions.sql` but never actually used until now — is the pointer into `batch_document_ids`. See `db/migrations/006_c2_batch_resume.sql` and `docs/schema.md`'s `sessions` section for the full state-machine writeup.
