@@ -153,6 +153,13 @@ readiness" is a named judging criterion.
   `main` require one review from a teammate on a different track — this is
   how we catch integration breaks early, given four people building in
   parallel.
+- **Git workflow for agents (human or Codex/Claude/etc.):** push only to a
+  `track/{a,b,c,d}/{issue-number}-{short-desc}` branch, never directly to
+  `main`. Land changes as new commits — don't amend or rebase-rewrite a
+  commit that's already been pushed, since teammates may have already
+  fetched it. Opening the PR into `main` is a manual, human step; an agent
+  finishing work on a branch should stop there and hand it back rather than
+  running `gh pr create` itself.
 - **Environment parity:** one shared CockroachDB Cloud cluster for dev, one
   for demo. Don't create ad hoc local schemas that drift from §4.
 - **Schema changes force a doc update, in the same PR — CI enforces this.**
