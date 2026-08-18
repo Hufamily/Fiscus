@@ -65,6 +65,8 @@ Works with zero credentials in mock mode; set `DATABASE_URL` + AWS creds for liv
 
 ## Architecture
 
+![Fiscus architecture](docs/architecture.svg)
+
 ```
 Volunteer ──► Front-end (Vercel) ──► services/api ──► CockroachDB (memory layer)
                                           │                ├─ vector index (embeddings, 1536-dim Titan)
