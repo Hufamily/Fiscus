@@ -17,7 +17,8 @@
     "embed:file": "tsx services/ingestion/embeddings/src/cli.ts embed",
     "search": "tsx services/ingestion/embeddings/src/cli.ts search",
     "agent:ask": "tsx services/agent/src/cli.ts ask",
-    "summary:generate": "tsx services/api/summaries/src/cli.ts generate"
+    "summary:generate": "tsx services/api/summaries/src/cli.ts generate",
+    "api:serve": "tsx services/api/server.ts"
   },
   "devDependencies": {
     "@types/pg": "^8.23.0",
