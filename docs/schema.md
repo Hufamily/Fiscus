@@ -7,6 +7,14 @@ is `AGENTS.md` §4; this file documents what was actually built and any
 open assumptions for the owning track to confirm. Regenerate by re-running
 the `SHOW CREATE TABLE` queries below if the schema changes.
 
+**006 (`review_flagged`) note:** this sandbox had no `COCKROACH_DATABASE_URL`
+configured (mock-mode-only, same limitation earlier sessions hit — see
+CLAUDE.md Learnings), so `transactions_status_check`'s new value below is
+derived from the migration file itself, not re-verified with a live
+`SHOW CREATE TABLE`. Whoever next has real cluster access should confirm
+`006` actually applied cleanly (`npm run db:migrate`) and this block still
+matches.
+
 **Note:** AGENTS.md §4 says tables live in a database named `orgfinance`.
 The cluster's actual database (from the connection string in `.env`) is
 `defaultdb` — nothing in this repo creates or references an `orgfinance`
@@ -27,6 +35,7 @@ Migration history:
 | `004_a1_volunteers_corrections_indexes.sql` | A1 | `volunteers`, `corrections`, vector indexes on `templates.embedding` and `transactions.embedding` |
 | `005_d2_summaries.sql` | D2 | `summaries` (additive, not in the original §4 contract) |
 | `006_c2_batch_resume.sql` | C2 | `sessions.batch_document_ids`, `sessions.batch_status` (additive columns for batch/task resume) |
+| `006_b3_review_flagged.sql` | B3 | adds `'review_flagged'` to `transactions_status_check` |
 
 001-003 were written as minimal stopgaps by other tracks so development
 could start before A1 landed (see the comments in each file). This issue
@@ -139,13 +148,30 @@ CREATE TABLE public.transactions (
 	CONSTRAINT transactions_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id),
 	INDEX transactions_created_at_idx (org_id ASC, created_at DESC),
 	VECTOR INDEX transactions_org_embedding_idx (org_id, embedding vector_l2_ops),
-	CONSTRAINT transactions_status_check CHECK (status IN ('pending_review', 'approved', 'rejected'))
+	CONSTRAINT transactions_status_check CHECK (status IN ('pending_review', 'approved', 'rejected', 'review_flagged'))
 );
 ```
 
 Same open-vocabulary flag as `documents.status` applies to `transactions.status`
-— its 3-value CHECK also predates A1 (from B1's stopgap) and wasn't loosened
-for the same reason.
+— its original 3-value CHECK also predates A1 (from B1's stopgap) and wasn't
+loosened for the same reason. B3 (`006_b3_review_flagged.sql`) added a fourth
+value, `'review_flagged'`, by dropping and recreating the constraint
+(CockroachDB has no `ALTER CONSTRAINT` for changing a CHECK expression
+in place) — used by anomaly flagging (see "Anomaly flagging" below), not by
+any human-driven state transition.
+
+### Anomaly flagging (B3)
+
+`services/ingestion/embeddings/src/anomaly.ts` (`checkAndFlagAnomaly`) looks
+up a transaction's `k` nearest neighbors via `searchTransactions` (excluding
+itself) and, if every neighbor's `embedding <-> $1` distance exceeds a
+threshold (default `k=3`, `distanceThreshold=8`), sets that transaction's
+`status` to `review_flagged` and audit-logs an `anomaly_flagged` action with
+the neighbor ids/distances in `detail_json`. Wired into the ingestion CLI
+(`embed:file`) so it fires automatically on newly-embedded transactions; also
+exported as a standalone function for `services/api` (issue #26) to call
+directly. In mock mode it runs against real L2 distances computed over the
+fixture's stored embeddings (`client.ts`'s `l2Distance`), not a placeholder.
 
 ## corrections
 
