@@ -18,7 +18,7 @@ const DB_URL = process.env.DATABASE_URL ?? process.env.COCKROACH_DATABASE_URL;
 const HAS_AWS = !!(process.env.AWS_ACCESS_KEY_ID || process.env.AWS_PROFILE);
 export const IS_MOCK = !DB_URL || !HAS_AWS;
 
-const BEDROCK_MODEL = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-3-5-haiku-20241022-v1:0';
+const BEDROCK_MODEL = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
 export const ORG_ID = '00000000-0000-0000-0000-000000000001';
 
 // ── Mock extraction fixtures keyed by doc_type ────────────────────────────────
