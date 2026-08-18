@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 import pg from 'pg';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import type { SessionRow, AggregateRow, TransactionSummary } from './types';
+import { runReadOnlyQuery, isMcpConfigured, assertUuid, assertPositiveInt, embeddingLiteral } from './mcp-client';
 
 const { Pool } = pg;
 
@@ -17,6 +18,12 @@ process.env.FISCUS_MOCK_DB = MOCK_DB_PATH;
 const DB_URL = process.env.DATABASE_URL ?? process.env.COCKROACH_DATABASE_URL;
 const HAS_AWS = !!(process.env.AWS_ACCESS_KEY_ID || process.env.AWS_PROFILE);
 export const IS_MOCK = !DB_URL || !HAS_AWS;
+
+// Reads only: per AGENTS.md §6, the agent's write path always goes through
+// the `pg` pool below + lib/audit.ts, never raw MCP writes. Reads use the
+// Managed MCP Server when a service-account key is configured, and fall
+// back to `pg` otherwise (e.g. local dev against a bare cluster).
+export const USE_MCP = !IS_MOCK && isMcpConfigured();
 
 const BEDROCK_MODEL = process.env.BEDROCK_MODEL_ID ?? 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
 export const ORG_ID = '00000000-0000-0000-0000-000000000001';
@@ -100,16 +107,18 @@ export async function getAggregates(): Promise<AggregateRow[]> {
     }
     return Array.from(map.values());
   }
-  const result = await getPool().query<AggregateRow>(
-    `SELECT category, status,
+  const orgId = assertUuid(ORG_ID, 'ORG_ID');
+  const sql = `SELECT category, status,
             SUM(amount_cents)::int AS total_cents,
             COUNT(*)::int          AS count
      FROM transactions
-     WHERE org_id = $1
+     WHERE org_id = '${orgId}'
      GROUP BY category, status
-     ORDER BY SUM(amount_cents) DESC`,
-    [ORG_ID],
-  );
+     ORDER BY SUM(amount_cents) DESC`;
+  if (USE_MCP) {
+    return runReadOnlyQuery<AggregateRow>(sql);
+  }
+  const result = await getPool().query<AggregateRow>(sql);
   return result.rows;
 }
 
@@ -128,14 +137,18 @@ export async function getSimilarTransactions(
       status: t.status,
     }));
   }
-  const result = await getPool().query<TransactionSummary>(
-    `SELECT id, category, amount_cents, txn_date, status
+  const orgId = assertUuid(ORG_ID, 'ORG_ID');
+  const safeLimit = assertPositiveInt(limit, 'limit');
+  const vectorLiteral = embeddingLiteral(queryEmbedding, 'queryEmbedding');
+  const sql = `SELECT id, category, amount_cents, txn_date, status
      FROM transactions
-     WHERE org_id = $1
-     ORDER BY embedding <-> $2
-     LIMIT $3`,
-    [ORG_ID, JSON.stringify(queryEmbedding), limit],
-  );
+     WHERE org_id = '${orgId}'
+     ORDER BY embedding <-> '${vectorLiteral}'
+     LIMIT ${safeLimit}`;
+  if (USE_MCP) {
+    return runReadOnlyQuery<TransactionSummary>(sql);
+  }
+  const result = await getPool().query<TransactionSummary>(sql);
   return result.rows;
 }
 
@@ -145,10 +158,14 @@ export async function getSession(sessionId: string): Promise<SessionRow | null> 
     const db = readMockDb();
     return db.sessions.find((s) => s.id === sessionId) ?? null;
   }
-  const result = await getPool().query<SessionRow>(
-    `SELECT * FROM sessions WHERE id = $1 AND org_id = $2`,
-    [sessionId, ORG_ID],
-  );
+  const id = assertUuid(sessionId, 'sessionId');
+  const orgId = assertUuid(ORG_ID, 'ORG_ID');
+  const sql = `SELECT * FROM sessions WHERE id = '${id}' AND org_id = '${orgId}'`;
+  if (USE_MCP) {
+    const rows = await runReadOnlyQuery<SessionRow>(sql);
+    return rows[0] ?? null;
+  }
+  const result = await getPool().query<SessionRow>(sql);
   return result.rows[0] ?? null;
 }
 
