@@ -9,9 +9,16 @@ import { logAction } from '../../../../lib/audit';
 import { ExtractionSchema, type ExtractionResult, type TransactionRow } from './types';
 import {
   invokeModel, getMockExtraction, insertDocument, insertTransaction,
-  IS_MOCK, ORG_ID,
+  searchTemplates, IS_MOCK, ORG_ID,
 } from './client';
 import { checkAndFlagAnomaly } from './anomaly';
+
+// A template match this close (or closer) is treated as "the template the
+// agent actually used to inform this extraction," not just an incidental
+// nearest neighbor — mirrors anomaly.ts's DEFAULT_DISTANCE_THRESHOLD in
+// spirit (same embedding space, same L2 metric) but intentionally tighter,
+// since "used" is a stronger claim than "not anomalous."
+const TEMPLATE_USE_DISTANCE_THRESHOLD = 8;
 
 const EXTRACTION_SYSTEM = `You are a financial document field extractor.
 Given a redacted financial document, output ONLY valid JSON matching this shape exactly:
@@ -79,8 +86,30 @@ export async function embedFiles(
       doc_type: docType,
       category: extraction.category,
       amount_cents: extraction.amount_cents,
+      document_id: doc.id,
       s3_key: doc.s3_key,
     });
+
+    // C4: "which template does this look like?" (B3's searchTemplates) --
+    // find the closest approved template for this org and, if it's close
+    // enough to plausibly be what informed this extraction, audit-log
+    // `template_used`. Distinct from `template_generated`/`template_approved`
+    // (template-gen's CLI), which are about creating/approving a template,
+    // not applying one during extraction. No-op when nothing is close
+    // enough (or no approved templates exist yet) -- that's "no template
+    // used," not an error.
+    const templateMatches = await searchTemplates(embedding, 1);
+    const bestTemplate = templateMatches.find(
+      (t) => t.status === 'approved' && t.distance <= TEMPLATE_USE_DISTANCE_THRESHOLD,
+    );
+    if (bestTemplate) {
+      await logAction(ORG_ID, 'cli-system', 'template_used', 'templates', bestTemplate.id, {
+        document_id: doc.id,
+        transaction_id: txn.id,
+        form_type: bestTemplate.form_type,
+        distance: bestTemplate.distance,
+      });
+    }
 
     // B3: flag it for review if it doesn't resemble anything else on file —
     // audit-logged inside checkAndFlagAnomaly when it fires.
@@ -91,6 +120,7 @@ export async function embedFiles(
     console.log(
       `  ✓ ${path.basename(fp)} → txn ${txn.id}  ` +
       `[${extraction.category}  $${(extraction.amount_cents / 100).toFixed(2)}  ${extraction.txn_date}]` +
+      (bestTemplate ? `  (template: ${bestTemplate.form_type})` : '') +
       (flagged ? '  ⚠ review_flagged (anomaly: no similar transactions on file)' : ''),
     );
   }

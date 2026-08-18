@@ -82,7 +82,11 @@ export async function invokeModel(systemPrompt: string, userPrompt: string): Pro
     inferenceConfig: { maxTokens: 1024, temperature: 0 },
   }));
   const block = resp.output?.message?.content?.[0];
-  if (!block || block.type !== 'text' || !block.text) {
+  // The AWS SDK's ContentBlock union has no `type` discriminant field, so
+  // `block.type !== 'text'` doesn't compile under strict mode -- narrow with
+  // an `in` check instead (same fix already applied to the other three
+  // Bedrock client.ts files this week, see CLAUDE.md Learnings).
+  if (!block || !('text' in block) || !block.text) {
     throw new Error('Bedrock returned no text content');
   }
   return block.text;

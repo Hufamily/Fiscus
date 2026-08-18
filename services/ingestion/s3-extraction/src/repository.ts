@@ -29,7 +29,7 @@ export async function recordUpload(identity: DocumentIdentity, actorId: string, 
       [identity.documentId, identity.orgId, identity.s3Key, docType, actorId],
     );
   }
-  await logAction(identity.orgId, actorId, 'document_uploaded', 'documents', identity.documentId, { s3Key: identity.s3Key });
+  await logAction(identity.orgId, actorId, 'document_uploaded', 'documents', identity.documentId, { s3_key: identity.s3Key });
 }
 
 export type SaveExtractionOutcome = 'saved' | 'duplicate';
@@ -59,7 +59,7 @@ export async function saveExtraction(identity: DocumentIdentity, extraction: Ext
     doc.status = 'needs_review';
     writeMockDb(db);
     await logAction(identity.orgId, SYSTEM_ACTOR, 'extraction_saved', 'transactions', transactionId, {
-      documentId: identity.documentId,
+      document_id: identity.documentId,
       source: SYSTEM_ACTOR,
     });
     return 'saved';
@@ -105,7 +105,7 @@ export async function saveExtraction(identity: DocumentIdentity, extraction: Ext
     ]);
     await client.query('COMMIT');
     await logAction(identity.orgId, SYSTEM_ACTOR, 'extraction_saved', 'transactions', transactionId, {
-      documentId: identity.documentId,
+      document_id: identity.documentId,
       source: SYSTEM_ACTOR,
     });
     return 'saved';

@@ -35,6 +35,13 @@ export interface ResumedBatch {
  * Call this on agent start / volunteer login before starting a fresh batch
  * -- this is the "resume rather than starting fresh" requirement from C2.
  * Returns null if there's nothing to resume.
+ *
+ * C4: audited as `batch_resumed` -- this is the actual "session resumed"
+ * moment (a live, in_progress batch was found and handed back to the
+ * caller), as distinct from `batch_started`/`batch_advanced`/
+ * `batch_completed`. Only fires when there's really something to resume;
+ * the "nothing to resume" (null) path is not itself an action worth
+ * auditing.
  */
 export async function resumeOpenBatch(
   orgId: string = ORG_ID,
@@ -43,6 +50,11 @@ export async function resumeOpenBatch(
   const session = await getOpenBatchSession(orgId, volunteerId);
   if (!session) return null;
   const nextDocumentId = session.batch_document_ids[session.current_index];
+  await logAction(orgId, volunteerId, 'batch_resumed', 'sessions', session.id, {
+    document_id: nextDocumentId,
+    current_index: session.current_index,
+    document_count: session.batch_document_ids.length,
+  });
   return { session, nextDocumentId };
 }
 
@@ -61,7 +73,8 @@ export async function startBatch(
 ): Promise<SessionRow> {
   const session = await createBatchSession(orgId, volunteerId, documentIds);
   await logAction(orgId, volunteerId, 'batch_started', 'sessions', session.id, {
-    documentCount: documentIds.length,
+    document_count: documentIds.length,
+    document_ids: documentIds,
   });
   return session;
 }
