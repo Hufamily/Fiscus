@@ -9,7 +9,7 @@ how" writeup — keep it accurate as you go, don't reconstruct it at the end.
 | Category | Tool | Used? | How (fill in as implemented) | First PR |
 |---|---|---|---|---|
 | CockroachDB | Distributed Vector Indexing | ☑ | B1 embeddings: transactions.embedding VECTOR(1536) stores Titan embeddings; search.ts uses `<->` for similarity ranking. A1 added the actual `CREATE VECTOR INDEX` (org_id, embedding) on templates and transactions — before A1 there was no index behind the `<->` queries, just a full scan; confirmed via `SHOW CREATE TABLE` and `EXPLAIN` that org-scoped similarity queries now plan through the index. See docs/schema.md. | B1 (storage/query), A1 (actual index) |
-| CockroachDB | Managed MCP Server | ☐ | | |
+| CockroachDB | Managed MCP Server | ☑ | services/agent's read path (getAggregates, getSimilarTransactions, getSession) goes through the CockroachDB Cloud Managed MCP Server via `@modelcontextprotocol/sdk` (services/agent/src/mcp-client.ts) when `COCKROACH_MCP_API_KEY` is set, falling back to `pg` otherwise; writes stay on `pg` + lib/audit.ts per AGENTS.md §6. Typechecked/lint-clean and mock-mode-regression-tested, but not yet exercised against a live managed server — see the "KNOWN GAP" note in mcp-client.ts. | track/c/agent-mcp-reads |
 | CockroachDB | Agent Skills Repo | ☐ | | |
 | AWS | S3 | ☐ | | |
 | AWS | Lambda | ☐ | | |
