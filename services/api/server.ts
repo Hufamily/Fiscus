@@ -608,7 +608,10 @@ async function handleUploadDocument(_req: http.IncomingMessage, res: http.Server
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
-async function router(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+// Exported so CI tests can drive the routing/RBAC/mapping logic over a real
+// http.Server on an ephemeral port without depending on the module's own
+// auto-listen below (see the `!process.env.VITEST` guard).
+export async function router(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const urlObj = new URL(req.url ?? '/', `http://localhost:${PORT}`);
   const p = urlObj.pathname.replace(/\/$/, '') || '/';
   const method = req.method?.toUpperCase() ?? 'GET';
@@ -659,12 +662,18 @@ async function router(req: http.IncomingMessage, res: http.ServerResponse): Prom
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-const server = http.createServer((req, res) => {
-  void router(req, res);
-});
+// Vitest sets process.env.VITEST=true automatically; skip auto-listen when this
+// module is imported for its `router` export in tests (they build their own
+// http.Server on an ephemeral port instead). `npm run api:serve` runs outside
+// vitest, so this guard never affects real usage.
+if (!process.env.VITEST) {
+  const server = http.createServer((req, res) => {
+    void router(req, res);
+  });
 
-server.listen(PORT, () => {
-  console.log(`[fiscus-api] listening on http://localhost:${PORT}`);
-  console.log(`[fiscus-api] mode: ${IS_MOCK ? 'MOCK (no DB/AWS creds)' : 'REAL (CockroachDB + AWS)'}`);
-  console.log(`[fiscus-api] org: ${ORG_ID}`);
-});
+  server.listen(PORT, () => {
+    console.log(`[fiscus-api] listening on http://localhost:${PORT}`);
+    console.log(`[fiscus-api] mode: ${IS_MOCK ? 'MOCK (no DB/AWS creds)' : 'REAL (CockroachDB + AWS)'}`);
+    console.log(`[fiscus-api] org: ${ORG_ID}`);
+  });
+}
