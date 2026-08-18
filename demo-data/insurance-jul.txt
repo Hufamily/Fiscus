@@ -1,0 +1,10 @@
+Shelter Shield Insurance Co.
+Policy: SS-GPR-2026
+Invoice date: 2026-07-09
+Insured: Green Paws Rescue
+
+General liability - quarterly premium     $410.00
+Property rider (shelter facility)          $95.00
+
+TOTAL: $505.00
+Autopay scheduled: card ending 8810

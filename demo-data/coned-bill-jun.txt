@@ -1,0 +1,12 @@
+ConEdison - Statement of Account
+Account: 4300-221-8876
+Service address: 88 Withers St, Brooklyn NY (shelter facility)
+Statement date: 2026-06-28
+Billing period: May 27 - Jun 26
+
+Electricity delivery      $118.40
+Electricity supply         $84.10
+Gas                        $12.10
+
+TOTAL AMOUNT DUE: $214.60
+Due date: 2026-07-15

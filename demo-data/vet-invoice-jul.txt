@@ -1,0 +1,11 @@
+Riverside Animal Hospital
+INVOICE #RV-2026-0714
+Date: 2026-07-14
+Client: Green Paws Rescue
+
+Emergency visit - Max (beagle) ingestion scare    $265.00
+X-ray series                                      $140.00
+Overnight observation                             $95.00
+
+AMOUNT DUE: $500.00
+Payment received - card ending 4021
